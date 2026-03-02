@@ -54,6 +54,13 @@ function dayKey(date: Date): number {
   return d.getTime()
 }
 
+function dateParam(date: Date): string {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
 export function TradingCalendar({ trades }: Props) {
   const router = useRouter()
   const { selected } = useAccount()
@@ -173,6 +180,21 @@ export function TradingCalendar({ trades }: Props) {
     router.push(`/review?${params.toString()}`)
   }
 
+  function goToDayJournal(day: number) {
+    const selectedDate = new Date(year, month, day)
+    const start = new Date(selectedDate)
+    start.setHours(0, 0, 0, 0)
+    const end = new Date(selectedDate)
+    end.setHours(23, 59, 59, 999)
+
+    const params = new URLSearchParams()
+    params.set('date', dateParam(selectedDate))
+    params.set('start', start.toISOString())
+    params.set('end', end.toISOString())
+    if (selected && selected.id !== 'all') params.set('accountId', selected.id)
+    router.push(`/journal/day?${params.toString()}`)
+  }
+
   return (
     <Card>
       <CardHeader className="pb-4">
@@ -255,7 +277,8 @@ export function TradingCalendar({ trades }: Props) {
                     <div
                       key={colIdx}
                       className={cn(
-                        'h-20 border-r border-border last:border-0 p-1.5 relative transition-all cursor-default',
+                        'h-20 border-r border-border last:border-0 p-1.5 relative transition-all',
+                        data ? 'cursor-pointer' : 'cursor-default',
                         isWeekend && !data && 'bg-muted/5',
                         data && isGreen && 'bg-emerald-500/5 hover:bg-emerald-500/10',
                         data && isRed && 'bg-red-500/5 hover:bg-red-500/10',
@@ -264,6 +287,7 @@ export function TradingCalendar({ trades }: Props) {
                       )}
                       onMouseEnter={() => setHovered(day)}
                       onMouseLeave={() => setHovered(null)}
+                      onClick={() => { if (data) goToDayJournal(day) }}
                     >
                       {/* Day number */}
                       <div className={cn(

@@ -75,7 +75,7 @@ export function Sidebar({ user }: SidebarProps) {
           alt="MS"
           className="h-8 w-auto object-contain shrink-0"
         />
-        <span className="font-black text-base tracking-tight">
+        <span className="font-black text-base tracking-tight -ml-3">
           <span className="text-emerald-400">MS</span><span className="text-slate-900 dark:text-white">Funded</span>
         </span>
         <Badge variant="outline" className="text-[9px] px-1.5 py-0 ml-auto border-emerald-500/30 text-emerald-500">

@@ -25,7 +25,7 @@ export function FilteredDashboard({ allTrades, isConnected }: Props) {
   const { consolidatePartials, updateConsolidatePartials } = useJournalConsolidatePartials()
 
   const trades = useMemo(() => {
-    if (!selected) return allTrades
+    if (!selected || selected.id === 'all') return allTrades
     return allTrades.filter(t => t.propFirmAccountId === selected.id)
   }, [allTrades, selected])
 

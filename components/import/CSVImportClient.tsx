@@ -165,9 +165,8 @@ function parseCSVLine(line: string): string[] {
 }
 
 function parseTimestamp(ts: string): number {
-  // Format: "02/03/2026 11:00:10"
-  if (!ts) return 0
-  return new Date(ts).getTime()
+  const d = parseTradovateTimestamp(ts)
+  return d ? d.getTime() : 0
 }
 
 function cleanSymbol(raw: string): string {
@@ -176,11 +175,40 @@ function cleanSymbol(raw: string): string {
 }
 
 function toISOString(ts: string): string {
-  // "02/03/2026 11:00:10" → ISO string
-  if (!ts) return new Date().toISOString()
-  const d = new Date(ts)
-  return isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString()
+  const d = parseTradovateTimestamp(ts)
+  return d ? d.toISOString() : new Date().toISOString()
 }
+
+function parseTradovateTimestamp(ts: string): Date | null {
+  if (!ts) return null
+  const trimmed = ts.trim()
+  const match = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2}):(\d{2})$/)
+  if (!match) return null
+
+  const [, mm, dd, yyyy, hh, min, ss] = match
+  const month = Number(mm)
+  const day = Number(dd)
+  const year = Number(yyyy)
+  const hour = Number(hh)
+  const minute = Number(min)
+  const second = Number(ss)
+
+  const parsed = new Date(year, month - 1, day, hour, minute, second, 0)
+  if (Number.isNaN(parsed.getTime())) return null
+  if (
+    parsed.getFullYear() !== year ||
+    parsed.getMonth() !== month - 1 ||
+    parsed.getDate() !== day ||
+    parsed.getHours() !== hour ||
+    parsed.getMinutes() !== minute ||
+    parsed.getSeconds() !== second
+  ) {
+    return null
+  }
+
+  return parsed
+}
+
 function allocateCommissionByQty(trades: ParsedTrade[], totalFees: number): string[] {
   const totalQty = trades.reduce((sum, t) => sum + t.qty, 0)
   if (totalQty <= 0 || totalFees <= 0) {

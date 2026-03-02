@@ -11,7 +11,7 @@ export function FilteredAnalytics({ allTrades }: { allTrades: Trade[] }) {
   const { selected } = useAccount()
 
   const trades = useMemo(() => {
-    if (!selected) return allTrades
+    if (!selected || selected.id === 'all') return allTrades
     return allTrades.filter(t => t.propFirmAccountId === selected.id)
   }, [allTrades, selected])
 
