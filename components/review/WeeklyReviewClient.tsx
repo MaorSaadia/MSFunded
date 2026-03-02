@@ -66,6 +66,9 @@ function formatWeekLabel(monday: Date): string {
 }
 function scoreColor(s: number) { return s >= 70 ? 'text-emerald-500' : s >= 45 ? 'text-yellow-500' : 'text-red-500' }
 function scoreBg(s: number)    { return s >= 70 ? 'bg-emerald-500'   : s >= 45 ? 'bg-yellow-500'   : 'bg-red-500' }
+function sameWeekStart(a: string | Date, b: Date) {
+  return new Date(a).getTime() === b.getTime()
+}
 function shortText(text: string | undefined, maxChars = 170) {
   if (!text) return ''
   if (text.length <= maxChars) return text
@@ -363,11 +366,17 @@ function ReviewBody({ review, streaming }: { review: ReviewData; streaming?: boo
 // ══════════════════════════════════════════════════════════
 export function WeeklyReviewClient({
   tradeCount, initialSavedReviews = [],
+  initialReviewId = null,
+  initialWeekStart = null,
+  autoGenerate = false,
 }: {
   tradeCount: number
   earliestDate: string
   initialSavedReviews?: SavedReview[]
   propFirmAccountId?: string | null
+  initialReviewId?: string | null
+  initialWeekStart?: string | null
+  autoGenerate?: boolean
 }) {
   const confirmAction = useConfirm()
   // Read the currently-selected prop firm account from global context
@@ -375,13 +384,19 @@ export function WeeklyReviewClient({
   const { selected, accounts } = useAccount()
   const propFirmAccountId = selected?.id ?? null
 
-  const [selectedMonday, setSelectedMonday] = useState(() => getMondayOfWeek(new Date()))
+  const [selectedMonday, setSelectedMonday] = useState(() => {
+    if (!initialWeekStart) return getMondayOfWeek(new Date())
+    const parsed = new Date(initialWeekStart)
+    if (Number.isNaN(parsed.getTime())) return getMondayOfWeek(new Date())
+    return getMondayOfWeek(parsed)
+  })
   const [liveReview, setLiveReview]         = useState<ReviewData | null>(null)
   const [streaming, setStreaming]           = useState(false)
   const [done, setDone]                     = useState(false)
   const [savedReviews, setSavedReviews]     = useState<SavedReview[]>(initialSavedReviews)
-  const [activeHistoryId, setActiveHistoryId] = useState<string | null>(null)
+  const [activeHistoryId, setActiveHistoryId] = useState<string | null>(initialReviewId)
   const abortRef = useRef<AbortController | null>(null)
+  const didAutoGenerateRef = useRef(false)
 
   // When user switches account: immediately clear the displayed review
   // so they NEVER see another account's review body
@@ -410,15 +425,17 @@ export function WeeklyReviewClient({
   const filteredReviews = (propFirmAccountId && propFirmAccountId !== 'all')
     ? savedReviews.filter(r => r.propFirmAccountId === propFirmAccountId)
     : savedReviews
+  const orderedReviews = [...filteredReviews].sort(
+    (a, b) => new Date(a.weekStart).getTime() - new Date(b.weekStart).getTime()
+  )
+  const selectedWeekSavedReview = orderedReviews.find(r => sameWeekStart(r.weekStart, selectedMonday)) ?? null
 
   const displayReview: ReviewData | null = activeHistoryId
-    ? (filteredReviews.find(r => r.id === activeHistoryId)?.reviewData ?? null)
-    : liveReview
+    ? (orderedReviews.find(r => r.id === activeHistoryId)?.reviewData ?? null)
+    : (liveReview ?? selectedWeekSavedReview?.reviewData ?? null)
 
   const isViewingHistory = !!activeHistoryId
-  const isCurrentWeekSaved = filteredReviews.some(r =>
-    new Date(r.weekStart).getTime() === selectedMonday.getTime()
-  )
+  const isCurrentWeekSaved = !!selectedWeekSavedReview
 
   function goToWeek(monday: Date) {
     setSelectedMonday(monday)
@@ -559,6 +576,16 @@ export function WeeklyReviewClient({
     }
   }, [selectedMonday, sunday, streaming])
 
+  useEffect(() => {
+    if (!autoGenerate) return
+    if (didAutoGenerateRef.current) return
+    if (activeHistoryId) return
+    if (streaming || liveReview) return
+    if (tradeCount === 0) return
+    didAutoGenerateRef.current = true
+    void generate()
+  }, [autoGenerate, activeHistoryId, streaming, liveReview, tradeCount, generate])
+
   function downloadReview() {
     if (!displayReview) return
     const r   = displayReview
@@ -595,24 +622,24 @@ export function WeeklyReviewClient({
   return (
     <div className={cn(
       'grid items-start gap-5',
-      filteredReviews.length > 0 ? 'lg:grid-cols-[260px_minmax(0,1fr)]' : 'grid-cols-1'
+      orderedReviews.length > 0 ? 'lg:grid-cols-[260px_minmax(0,1fr)]' : 'grid-cols-1'
     )}>
 
       {/* ── History sidebar ── */}
-      {filteredReviews.length > 0 && (
+      {orderedReviews.length > 0 && (
         <div className="space-y-2 rounded-2xl border bg-card/60 p-3 lg:sticky lg:top-20">
           <div className="flex items-center gap-2 px-1 mb-3">
             <BookOpen className="w-4 h-4 text-emerald-500" />
             <span className="text-xs font-black uppercase tracking-wider">Saved Reviews</span>
             <Badge className="text-[9px] px-1.5 py-0 h-4 bg-emerald-500 text-black font-bold ml-auto">
-              {filteredReviews.length}
+              {orderedReviews.length}
             </Badge>
           </div>
           <div className="space-y-2 max-h-[calc(100vh-220px)] overflow-y-auto pr-1">
-            {filteredReviews.map(r => (
+            {orderedReviews.map(r => (
               <HistoryItem
                 key={r.id} r={r}
-                active={activeHistoryId === r.id}
+                active={activeHistoryId === r.id || (!activeHistoryId && !liveReview && selectedWeekSavedReview?.id === r.id)}
                 onClick={() => {
                   setActiveHistoryId(prev => prev === r.id ? null : r.id)
                   setLiveReview(null)
@@ -666,7 +693,7 @@ export function WeeklyReviewClient({
             <p className="text-sm text-muted-foreground mt-0.5">AI coaching with auto-saved weekly reports</p>
             <div className="flex items-center gap-2 mt-3">
               <Badge variant="outline" className="text-[10px]">{tradeCount} trades imported</Badge>
-              <Badge variant="outline" className="text-[10px]">{filteredReviews.length} saved reviews</Badge>
+              <Badge variant="outline" className="text-[10px]">{orderedReviews.length} saved reviews</Badge>
             </div>
           </div>
           {displayReview && (
@@ -768,7 +795,7 @@ export function WeeklyReviewClient({
         {!displayReview && !streaming && (
           <div className="flex flex-col items-center justify-center py-20 border-2 border-dashed border-border rounded-2xl text-center bg-card/30">
             <h2 className="text-base font-black mb-2">
-              {filteredReviews.length > 0 ? 'Generate a new review or pick one from the sidebar' : 'Generate your first review'}
+              {orderedReviews.length > 0 ? 'Generate a new review or pick one from the sidebar' : 'Generate your first review'}
             </h2>
             <p className="text-sm text-muted-foreground max-w-sm mb-1">
               Pick a week and click Generate. You will get short, actionable coaching.

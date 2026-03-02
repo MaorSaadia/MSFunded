@@ -4,11 +4,14 @@
 // components/analytics/TradingCalendar.tsx
 
 import { useState, useMemo } from 'react'
-import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react'
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { ChevronLeft, ChevronRight, Calendar, Sparkles, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn, formatCurrency, getTradeTotalPnl } from '@/lib/utils'
 import type { Trade } from '@/lib/db/schema'
+import { useAccount } from '@/components/layout/AccountContext'
 
 interface Props { trades: Trade[] }
 
@@ -25,11 +28,56 @@ interface DayData {
   rMultiple: number
 }
 
+interface SavedReviewLite {
+  id: string
+  weekStart: string | Date
+  propFirmAccountId: string | null
+}
+
+interface WeeklyRow {
+  pnl: number
+  days: number
+  monday: Date | null
+}
+
+function getMondayOfWeek(date: Date): Date {
+  const d = new Date(date)
+  const day = d.getDay()
+  d.setDate(d.getDate() - day + (day === 0 ? -6 : 1))
+  d.setHours(0, 0, 0, 0)
+  return d
+}
+
+function dayKey(date: Date): number {
+  const d = new Date(date)
+  d.setHours(0, 0, 0, 0)
+  return d.getTime()
+}
+
 export function TradingCalendar({ trades }: Props) {
+  const router = useRouter()
+  const { selected } = useAccount()
   const today = new Date()
   const [year, setYear] = useState(today.getFullYear())
   const [month, setMonth] = useState(today.getMonth())
   const [hovered, setHovered] = useState<number | null>(null)
+  const [savedReviews, setSavedReviews] = useState<SavedReviewLite[]>([])
+
+  useEffect(() => {
+    let canceled = false
+    async function loadSavedReviews() {
+      try {
+        const res = await fetch('/api/review/saved')
+        if (!res.ok) return
+        const data = await res.json()
+        if (!canceled) setSavedReviews(Array.isArray(data) ? data : [])
+      } catch {
+        // non-blocking; weekly action buttons still work
+      }
+    }
+    void loadSavedReviews()
+    return () => { canceled = true }
+  }, [])
 
   // Build day → data map for current month
   const dayMap = useMemo(() => {
@@ -56,25 +104,6 @@ export function TradingCalendar({ trades }: Props) {
     return { pnl, tradingDays, greenDays, redDays }
   }, [dayMap])
 
-  // Weekly P&L
-  const weeklyStats = useMemo(() => {
-    const firstDay = new Date(year, month, 1).getDay()
-    const daysInMonth = new Date(year, month + 1, 0).getDate()
-    const weeks: { pnl: number; days: number }[] = []
-    let weekPnl = 0, weekDays = 0, currentWeek = 0
-
-    for (let d = 1; d <= daysInMonth; d++) {
-      const dow = (firstDay + d - 1) % 7
-      if (dow === 0 && d > 1) {
-        weeks.push({ pnl: weekPnl, days: weekDays })
-        weekPnl = 0; weekDays = 0; currentWeek++
-      }
-      if (dayMap[d]) { weekPnl += dayMap[d].pnl; weekDays++ }
-      if (d === daysInMonth) weeks.push({ pnl: weekPnl, days: weekDays })
-    }
-    return weeks
-  }, [dayMap, year, month])
-
   // Calendar grid
   const firstDow = new Date(year, month, 1).getDay()
   const daysInMonth = new Date(year, month + 1, 0).getDate()
@@ -85,6 +114,43 @@ export function TradingCalendar({ trades }: Props) {
   // Pad to complete last row
   while (cells.length % 7 !== 0) cells.push(null)
   const rows = Array.from({ length: cells.length / 7 }, (_, i) => cells.slice(i * 7, i * 7 + 7))
+
+  const weeklyStats: WeeklyRow[] = useMemo(() => {
+    return rows.map((row) => {
+      const realDays = row.filter((d): d is number => d !== null)
+      if (realDays.length === 0) return { pnl: 0, days: 0, monday: null }
+
+      let pnl = 0
+      let days = 0
+      for (const day of realDays) {
+        const data = dayMap[day]
+        if (data) {
+          pnl += data.pnl
+          days++
+        }
+      }
+
+      // Anchor to the row's Monday cell (index 1) so week mapping matches Monday-Sunday review weeks.
+      const mondayCellDay = row[1]
+      const anchorDay = mondayCellDay ?? realDays[0]
+      const anchor = new Date(year, month, anchorDay)
+      return { pnl, days, monday: getMondayOfWeek(anchor) }
+    })
+  }, [rows, dayMap, year, month])
+
+  const filteredSavedReviews = useMemo(() => {
+    if (!selected || selected.id === 'all') return savedReviews
+    return savedReviews.filter(r => r.propFirmAccountId === selected.id)
+  }, [savedReviews, selected])
+
+  const savedByWeekKey = useMemo(() => {
+    const map = new Map<number, SavedReviewLite>()
+    for (const review of filteredSavedReviews) {
+      const key = dayKey(new Date(review.weekStart))
+      if (!map.has(key)) map.set(key, review)
+    }
+    return map
+  }, [filteredSavedReviews])
 
   function prevMonth() {
     if (month === 0) { setMonth(11); setYear(y => y - 1) }
@@ -97,6 +163,15 @@ export function TradingCalendar({ trades }: Props) {
   function goToday() { setYear(today.getFullYear()); setMonth(today.getMonth()) }
 
   const isCurrentMonth = year === today.getFullYear() && month === today.getMonth()
+
+  function goToWeeklyReview(options: { monday: Date; reviewId?: string; action?: 'generate' }) {
+    const params = new URLSearchParams()
+    if (selected && selected.id !== 'all') params.set('accountId', selected.id)
+    params.set('weekStart', options.monday.toISOString())
+    if (options.reviewId) params.set('reviewId', options.reviewId)
+    if (options.action) params.set('action', options.action)
+    router.push(`/review?${params.toString()}`)
+  }
 
   return (
     <Card>
@@ -249,9 +324,9 @@ export function TradingCalendar({ trades }: Props) {
             {weeklyStats.map((week, i) => (
               <div
                 key={i}
-                className="h-20 border-b border-border last:border-0 flex flex-col items-center justify-center px-2 gap-0.5"
+                className="h-20 border-b border-border last:border-0 flex flex-col items-center justify-center px-2 gap-1"
               >
-                {week.days > 0 ? (
+                {week.days > 0 && week.monday ? (
                   <>
                     <p className="text-[9px] text-muted-foreground">Week {i + 1}</p>
                     <p className={cn(
@@ -263,10 +338,34 @@ export function TradingCalendar({ trades }: Props) {
                         : `$${week.pnl.toFixed(0)}`
                       }
                     </p>
-                    <p className="text-[9px] text-muted-foreground">{week.days} day{week.days !== 1 ? 's' : ''}</p>
+                    {(() => {
+                      const matchedReview = savedByWeekKey.get(dayKey(week.monday!))
+                      return matchedReview ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-6 px-2 text-[9px] gap-1"
+                          onClick={() => goToWeeklyReview({ monday: week.monday!, reviewId: matchedReview.id })}
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                          Open Review
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          className="h-6 px-2 text-[9px] gap-1 bg-emerald-500 hover:bg-emerald-600 text-black"
+                          onClick={() => goToWeeklyReview({ monday: week.monday!, action: 'generate' })}
+                          title="Generate a new AI weekly review for this week, then save it to Weekly Review history."
+                          aria-label="Generate and save weekly review"
+                        >
+                          <Sparkles className="w-3 h-3" />
+                          Generate Review
+                        </Button>
+                      )
+                    })()}
                   </>
                 ) : (
-                  <p className="text-[9px] text-muted-foreground/40">—</p>
+                  <p className="text-[9px] text-muted-foreground/40">-</p>
                 )}
               </div>
             ))}
@@ -276,3 +375,4 @@ export function TradingCalendar({ trades }: Props) {
     </Card>
   )
 }
+

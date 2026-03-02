@@ -9,7 +9,12 @@ import { eq, desc } from 'drizzle-orm'
 import { WeeklyReviewClient } from '@/components/review/WeeklyReviewClient'
 
 interface Props {
-  searchParams: Promise<{ accountId?: string }>
+  searchParams: Promise<{
+    accountId?: string
+    reviewId?: string
+    weekStart?: string
+    action?: string
+  }>
 }
 
 export default async function ReviewPage({ searchParams }: Props) {
@@ -22,6 +27,9 @@ export default async function ReviewPage({ searchParams }: Props) {
   // AccountContext pattern uses. For simplicity we read it from searchParams.
   const resolvedSearchParams = await searchParams
   const propFirmAccountId = resolvedSearchParams?.accountId ?? null
+  const initialReviewId = resolvedSearchParams?.reviewId ?? null
+  const initialWeekStart = resolvedSearchParams?.weekStart ?? null
+  const autoGenerate = resolvedSearchParams?.action === 'generate'
 
   const [allTrades, savedReviews] = await Promise.all([
     db.query.trades.findMany({
@@ -60,6 +68,9 @@ export default async function ReviewPage({ searchParams }: Props) {
         earliestDate={earliestDate.toISOString()}
         initialSavedReviews={savedReviews as any}
         propFirmAccountId={propFirmAccountId}
+        initialReviewId={initialReviewId}
+        initialWeekStart={initialWeekStart}
+        autoGenerate={autoGenerate}
       />
     </div>
   )
