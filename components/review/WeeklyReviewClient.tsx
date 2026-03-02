@@ -66,6 +66,14 @@ function formatWeekLabel(monday: Date): string {
 }
 function scoreColor(s: number) { return s >= 70 ? 'text-emerald-500' : s >= 45 ? 'text-yellow-500' : 'text-red-500' }
 function scoreBg(s: number)    { return s >= 70 ? 'bg-emerald-500'   : s >= 45 ? 'bg-yellow-500'   : 'bg-red-500' }
+function shortText(text: string | undefined, maxChars = 170) {
+  if (!text) return ''
+  if (text.length <= maxChars) return text
+  return `${text.slice(0, maxChars - 1).trimEnd()}…`
+}
+function take<T>(arr: T[] | undefined, max: number) {
+  return (arr ?? []).slice(0, max)
+}
 
 function ScoreRing({ score, size = 90 }: { score: number; size?: number }) {
   const r  = (size - 14) / 2
@@ -92,7 +100,7 @@ function SectionCard({ icon: Icon, title, color, children, delay = 0 }: {
   icon: any; title: string; color: string; children: React.ReactNode; delay?: number
 }) {
   return (
-    <Card className="relative overflow-hidden animate-in fade-in slide-in-from-bottom-3"
+    <Card className="relative overflow-hidden border-border/70 bg-card/80 backdrop-blur-sm animate-in fade-in slide-in-from-bottom-3"
       style={{ animationDelay: `${delay}ms`, animationFillMode: 'both' }}>
       <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: color }} />
       <CardHeader className="pb-3">
@@ -208,15 +216,15 @@ function ReviewBody({ review, streaming }: { review: ReviewData; streaming?: boo
       <Card className="relative overflow-hidden border-emerald-500/20">
         <div className="absolute inset-0 bg-linear-to-br from-emerald-500/5 to-transparent pointer-events-none" />
         <CardContent className="p-6">
-          <div className="flex items-center gap-5">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-5">
             <ScoreRing score={review.overallScore} />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-2 flex-wrap">
                 <Badge variant="outline" className="text-[10px] border-emerald-500/30 text-emerald-500">{review.weekLabel}</Badge>
                 {streaming && <span className="inline-block w-0.5 h-4 bg-emerald-500 animate-pulse align-middle" />}
               </div>
-              <h2 className="text-lg font-black leading-snug mb-2">{review.headline}</h2>
-              <div className="flex gap-4 text-xs text-muted-foreground flex-wrap">
+              <h2 className="text-lg font-black leading-snug mb-2">{shortText(review.headline, 90)}</h2>
+              <div className="grid grid-cols-2 gap-2 max-w-xs text-xs">
                 <span>Score: <strong className={scoreColor(review.overallScore)}>{review.overallScore}/100</strong></span>
                 <span>Discipline: <strong className={scoreColor(review.psychologicalAnalysis?.disciplineScore)}>{review.psychologicalAnalysis?.disciplineScore}/100</strong></span>
               </div>
@@ -227,17 +235,17 @@ function ReviewBody({ review, streaming }: { review: ReviewData; streaming?: boo
 
       {review.performanceSummary && (
         <SectionCard icon={TrendingUp} title="Performance Summary" color="#10b981" delay={50}>
-          <p className="text-sm text-muted-foreground leading-relaxed">{review.performanceSummary.paragraph}</p>
+          <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">{shortText(review.performanceSummary.paragraph, 180)}</p>
           <div className="grid gap-2">
-            {review.performanceSummary.highlights?.map((h, i) => <Pill key={i} text={h} positive />)}
-            {review.performanceSummary.concerns?.map((c, i) => <Pill key={i} text={c} positive={false} />)}
+            {take(review.performanceSummary.highlights, 2).map((h, i) => <Pill key={i} text={shortText(h, 80)} positive />)}
+            {take(review.performanceSummary.concerns, 2).map((c, i) => <Pill key={i} text={shortText(c, 80)} positive={false} />)}
           </div>
         </SectionCard>
       )}
 
       {review.patternAnalysis && (
         <SectionCard icon={BarChart3} title="Pattern Analysis" color="#3b82f6" delay={100}>
-          <p className="text-sm text-muted-foreground leading-relaxed">{review.patternAnalysis.paragraph}</p>
+          <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">{shortText(review.patternAnalysis.paragraph, 180)}</p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {[
               { label: '✅ Best Time',   value: review.patternAnalysis.bestTimeToTrade,  cls: 'border-emerald-500/20 bg-emerald-500/5' },
@@ -253,9 +261,9 @@ function ReviewBody({ review, streaming }: { review: ReviewData; streaming?: boo
           {review.patternAnalysis.keyInsights?.length > 0 && (
             <div className="space-y-2">
               <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Key Insights</p>
-              {review.patternAnalysis.keyInsights.map((insight, i) => (
+              {take(review.patternAnalysis.keyInsights, 3).map((insight, i) => (
                 <div key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
-                  <Zap className="w-3.5 h-3.5 mt-0.5 text-blue-500 shrink-0" />{insight}
+                  <Zap className="w-3.5 h-3.5 mt-0.5 text-blue-500 shrink-0" />{shortText(insight, 90)}
                 </div>
               ))}
             </div>
@@ -269,19 +277,19 @@ function ReviewBody({ review, streaming }: { review: ReviewData; streaming?: boo
             <ScoreRing score={review.psychologicalAnalysis.disciplineScore} size={68} />
             <div className="flex-1">
               <p className="text-xs font-bold mb-1">Discipline Score</p>
-              <p className="text-sm text-muted-foreground leading-relaxed">{review.psychologicalAnalysis.paragraph}</p>
+              <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">{shortText(review.psychologicalAnalysis.paragraph, 170)}</p>
             </div>
           </div>
           <div className="grid gap-2">
-            {review.psychologicalAnalysis.flags?.map((f, i) => <Pill key={i} text={f} positive={false} />)}
-            {review.psychologicalAnalysis.strengths?.map((s, i) => <Pill key={i} text={s} positive />)}
+            {take(review.psychologicalAnalysis.flags, 2).map((f, i) => <Pill key={i} text={shortText(f, 80)} positive={false} />)}
+            {take(review.psychologicalAnalysis.strengths, 2).map((s, i) => <Pill key={i} text={shortText(s, 80)} positive />)}
           </div>
         </SectionCard>
       )}
 
       {review.mistakeReview && (
         <SectionCard icon={AlertTriangle} title="Mistake Review" color="#f59e0b" delay={200}>
-          <p className="text-sm text-muted-foreground leading-relaxed">{review.mistakeReview.paragraph}</p>
+          <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">{shortText(review.mistakeReview.paragraph, 160)}</p>
           {review.mistakeReview.totalCost && (
             <div className="flex items-center gap-3 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
               <XCircle className="w-4 h-4 text-red-500 shrink-0" />
@@ -293,39 +301,39 @@ function ReviewBody({ review, streaming }: { review: ReviewData; streaming?: boo
           )}
           {review.mistakeReview.topMistakes?.length > 0 && (
             <div className="space-y-1.5">
-              {review.mistakeReview.topMistakes.map((m, i) => (
+              {take(review.mistakeReview.topMistakes, 3).map((m, i) => (
                 <div key={i} className="flex items-start gap-2 text-xs bg-muted/30 rounded-lg px-3 py-2">
-                  <span className="text-amber-500 shrink-0">{i + 1}.</span>{m}
+                  <span className="text-amber-500 shrink-0">{i + 1}.</span>{shortText(m, 90)}
                 </div>
               ))}
             </div>
           )}
           {review.mistakeReview.patternNote && (
-            <p className="text-xs text-muted-foreground italic border-l-2 border-amber-500/40 pl-3">{review.mistakeReview.patternNote}</p>
+            <p className="text-xs text-muted-foreground italic border-l-2 border-amber-500/40 pl-3">{shortText(review.mistakeReview.patternNote, 90)}</p>
           )}
         </SectionCard>
       )}
 
       {review.nextWeekActionPlan && (
         <SectionCard icon={Target} title="Next Week Action Plan" color="#10b981" delay={250}>
-          <p className="text-sm text-muted-foreground leading-relaxed">{review.nextWeekActionPlan.paragraph}</p>
+          <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">{shortText(review.nextWeekActionPlan.paragraph, 130)}</p>
           <div className="space-y-2">
             <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Rules for next week</p>
-            {review.nextWeekActionPlan.rules?.map((rule, i) => (
+            {take(review.nextWeekActionPlan.rules, 3).map((rule, i) => (
               <div key={i} className="flex items-start gap-3 bg-muted/30 rounded-xl px-4 py-3">
                 <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center text-[10px] font-black shrink-0 mt-0.5">{i + 1}</div>
-                <p className="text-xs leading-relaxed">{rule}</p>
+                <p className="text-xs leading-relaxed">{shortText(rule, 110)}</p>
               </div>
             ))}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3">
               <p className="text-[10px] text-muted-foreground mb-1">🎯 Focus Setup</p>
-              <p className="text-xs font-bold">{review.nextWeekActionPlan.focusSetup}</p>
+              <p className="text-xs font-bold">{shortText(review.nextWeekActionPlan.focusSetup, 70)}</p>
             </div>
             <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-3">
               <p className="text-[10px] text-muted-foreground mb-1">🚫 Strictly Avoid</p>
-              <p className="text-xs font-bold">{review.nextWeekActionPlan.avoidSetup}</p>
+              <p className="text-xs font-bold">{shortText(review.nextWeekActionPlan.avoidSetup, 70)}</p>
             </div>
           </div>
         </SectionCard>
@@ -340,7 +348,7 @@ function ReviewBody({ review, streaming }: { review: ReviewData; streaming?: boo
               </div>
               <div>
                 <p className="text-xs font-semibold text-emerald-500 mb-2 uppercase tracking-wider">From Your Coach</p>
-                <p className="text-sm text-foreground leading-relaxed italic">{review.coachClosing}</p>
+                <p className="text-sm text-foreground leading-relaxed italic">{shortText(review.coachClosing, 150)}</p>
               </div>
             </div>
           </CardContent>
@@ -585,11 +593,14 @@ export function WeeklyReviewClient({
   }
 
   return (
-    <div className="flex gap-5 items-start">
+    <div className={cn(
+      'grid items-start gap-5',
+      filteredReviews.length > 0 ? 'lg:grid-cols-[260px_minmax(0,1fr)]' : 'grid-cols-1'
+    )}>
 
       {/* ── History sidebar ── */}
       {filteredReviews.length > 0 && (
-        <div className="w-60 shrink-0 space-y-2">
+        <div className="space-y-2 rounded-2xl border bg-card/60 p-3 lg:sticky lg:top-20">
           <div className="flex items-center gap-2 px-1 mb-3">
             <BookOpen className="w-4 h-4 text-emerald-500" />
             <span className="text-xs font-black uppercase tracking-wider">Saved Reviews</span>
@@ -597,7 +608,7 @@ export function WeeklyReviewClient({
               {filteredReviews.length}
             </Badge>
           </div>
-          <div className="space-y-2 max-h-[calc(100vh-180px)] overflow-y-auto">
+          <div className="space-y-2 max-h-[calc(100vh-220px)] overflow-y-auto pr-1">
             {filteredReviews.map(r => (
               <HistoryItem
                 key={r.id} r={r}
@@ -643,18 +654,20 @@ export function WeeklyReviewClient({
       )}
 
       {/* ── Main panel ── */}
-      <div className="flex-1 min-w-0 space-y-5 pb-10">
+      <div className="min-w-0 space-y-5 pb-10">
 
         {/* Header */}
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 rounded-2xl border bg-card/60 p-4">
           <div>
             <h1 className="text-2xl font-black tracking-tight flex items-center gap-2">
               <Sparkles className="w-6 h-6 text-emerald-500" />
               Weekly Review
             </h1>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              AI coaching · auto-saved after every generation
-            </p>
+            <p className="text-sm text-muted-foreground mt-0.5">AI coaching with auto-saved weekly reports</p>
+            <div className="flex items-center gap-2 mt-3">
+              <Badge variant="outline" className="text-[10px]">{tradeCount} trades imported</Badge>
+              <Badge variant="outline" className="text-[10px]">{filteredReviews.length} saved reviews</Badge>
+            </div>
           </div>
           {displayReview && (
             <Button variant="outline" size="sm" onClick={downloadReview} className="gap-2 shrink-0">
@@ -665,7 +678,7 @@ export function WeeklyReviewClient({
 
         {/* Week selector — hide when viewing saved history */}
         {!isViewingHistory && (
-          <Card>
+          <Card className="border-border/70 bg-card/70">
             <CardContent className="p-4">
               <div className="flex flex-col sm:flex-row items-center gap-4">
                 <div className="flex items-center gap-3 flex-1">
@@ -681,7 +694,7 @@ export function WeeklyReviewClient({
                     </div>
                     <p className="text-[10px] text-muted-foreground">
                       {sunday < new Date() ? 'Past week' : 'Current week'}
-                      {isCurrentWeekSaved && <span className="text-emerald-500 ml-1.5 font-semibold">· saved ✓</span>}
+                      {isCurrentWeekSaved && <span className="text-emerald-500 ml-1.5 font-semibold">- saved</span>}
                     </p>
                   </div>
                   <Button variant="outline" size="icon" className="h-9 w-9 shrink-0"
@@ -753,16 +766,15 @@ export function WeeklyReviewClient({
 
         {/* Empty state */}
         {!displayReview && !streaming && (
-          <div className="flex flex-col items-center justify-center py-20 border-2 border-dashed border-border rounded-2xl text-center">
-            <div className="w-16 h-16 bg-muted rounded-2xl flex items-center justify-center mb-4 text-3xl">🤖</div>
+          <div className="flex flex-col items-center justify-center py-20 border-2 border-dashed border-border rounded-2xl text-center bg-card/30">
             <h2 className="text-base font-black mb-2">
               {filteredReviews.length > 0 ? 'Generate a new review or pick one from the sidebar' : 'Generate your first review'}
             </h2>
             <p className="text-sm text-muted-foreground max-w-sm mb-1">
-              Pick a week, hit Generate — Gemini analyzes every trade and coaches you on what to fix.
+              Pick a week and click Generate. You will get short, actionable coaching.
             </p>
             <p className="text-xs text-emerald-500 font-semibold">
-              Reviews auto-save and stay in your sidebar forever.
+              Reviews auto-save and stay in your sidebar.
             </p>
           </div>
         )}

@@ -154,67 +154,65 @@ function buildTradePayload(weekTrades: any[], mistakes: any[], allPlaybooks: any
     })),
   }
 }
-
 // ── Gemini prompt ─────────────────────────────────────────
 function buildPrompt(data: any, weekLabel: string): string {
-  return `You are an elite prop firm trading coach reviewing a trader's week. Your tone is balanced — honest about problems but genuinely encouraging about strengths. You give specific, actionable insights based on real data — not generic advice.
+  return `You are an elite prop firm trading coach reviewing a trader's week.
+Write concise, high-signal coaching with specific numbers from the data.
+Tone: direct, balanced, supportive. Avoid filler.
 
 Here is the trader's complete week of data for ${weekLabel}:
 
 ${JSON.stringify(data, null, 2)}
 
-Write a comprehensive weekly trading review with EXACTLY this JSON structure (respond with valid JSON only, no markdown, no extra text):
+Write a concise weekly trading review with EXACTLY this JSON structure (respond with valid JSON only, no markdown, no extra text):
 
 {
   "weekLabel": "${weekLabel}",
   "overallScore": <number 1-100>,
-  "headline": "<one punchy sentence summarizing the week — like a newspaper headline>",
+  "headline": "<max 12 words>",
   "performanceSummary": {
-    "paragraph": "<2-3 sentences covering the key stats: P&L, win rate, R:R. Be specific with numbers.>",
-    "highlights": ["<specific positive fact>", "<specific positive fact>"],
-    "concerns": ["<specific concern with data>", "<specific concern with data>"]
+    "paragraph": "<1-2 short sentences, max 30 words total. Include P&L and win rate.>",
+    "highlights": ["<max 2 items, each <= 10 words>"],
+    "concerns": ["<max 2 items, each <= 10 words>"]
   },
   "patternAnalysis": {
-    "paragraph": "<2-3 sentences about time-of-day, symbol, and day-of-week patterns you found>",
+    "paragraph": "<1-2 short sentences, max 30 words total>",
     "bestTimeToTrade": "<specific time range where they perform best, with data>",
     "worstTimeToTrade": "<specific time range to avoid, with data>",
     "bestSymbol": "<symbol with best edge>",
-    "keyInsights": ["<specific pattern insight>", "<specific pattern insight>", "<specific pattern insight>"]
+    "keyInsights": ["<max 3 items, each <= 10 words>"]
   },
   "psychologicalAnalysis": {
-    "paragraph": "<2-3 sentences on trading psychology — revenge trading, overtrading, emotional patterns>",
+    "paragraph": "<1-2 short sentences, max 30 words total>",
     "disciplineScore": <number 1-100>,
-    "flags": ["<specific psychological flag with data>"],
-    "strengths": ["<psychological strength observed>"]
+    "flags": ["<max 2 items, each <= 10 words>"],
+    "strengths": ["<max 2 items, each <= 10 words>"]
   },
   "mistakeReview": {
-    "paragraph": "<2 sentences summarizing the cost of mistakes this week>",
+    "paragraph": "<1-2 short sentences, max 24 words total>",
     "totalCost": "<dollar amount lost on mistake trades>",
-    "topMistakes": ["<mistake type: X occurrences, cost $Y>"],
-    "patternNote": "<one sentence about the pattern of mistakes>"
+    "topMistakes": ["<max 3 items, each <= 10 words>"],
+    "patternNote": "<one short sentence, <= 14 words>"
   },
   "nextWeekActionPlan": {
-    "paragraph": "<2 sentences framing next week's focus areas>",
+    "paragraph": "<1 short sentence, <= 18 words>",
     "rules": [
-      "<specific, concrete rule #1 — e.g. 'No trades after 11:30am — your afternoon win rate is only 32%'>",
-      "<specific, concrete rule #2>",
-      "<specific, concrete rule #3>",
-      "<specific, concrete rule #4>",
-      "<specific, concrete rule #5>"
+      "<max 3 rules. each <= 14 words. concrete and data-backed>"
     ],
     "focusSetup": "<the one setup to prioritize next week based on their data>",
     "avoidSetup": "<the one thing to strictly avoid>"
   },
-  "coachClosing": "<2-3 sentences of personal closing message from the coach — reference a specific thing from their week, end on genuine encouragement>"
+  "coachClosing": "<max 2 short sentences, <= 28 words total>"
 }
 
 Rules:
-- Reference specific numbers from the data everywhere
-- If data is missing (no mistakes logged, no playbook), acknowledge it and still give useful insight
-- Never give generic advice like "stick to your plan" — always tie it to their specific data
-- The action plan rules must be concrete and data-backed
-- Keep each section focused and tight — no padding`
+- Reference specific numbers from the data when available
+- If data is missing, acknowledge it briefly and still provide useful coaching
+- Never give generic advice. Tie each point to this week's data
+- Keep output compact: short phrases and short sentences only
+- Do not exceed list limits in the schema`
 }
+
 
 export async function POST(req: NextRequest) {
   const session = await auth()
@@ -269,8 +267,8 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 4096,
+            temperature: 0.45,
+            maxOutputTokens: 1800,
             responseMimeType: 'application/json',
           },
           safetySettings: [
@@ -330,3 +328,4 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
+
