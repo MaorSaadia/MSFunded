@@ -41,7 +41,7 @@ const BOOKS = [
     title: 'Smart Money, Simplified',
     subtitle: 'Your Complete ICT Blueprint from Beginner to Consistent Trader',
     level: 'Intermediate',
-    levelColor: 'text-emerald-300 bg-emerald-500/15 border-emerald-400/30',
+    levelColor: 'text-red-500 bg-rose-500/15 border-rose-500/30',
     accentColor: '#d33434',
     accentDim: '#bb2b2140',
     // Matched to the dark charcoal/slate of the cover
@@ -131,8 +131,8 @@ const BOOKS = [
     cardBorder: '#1e3a5f',
     coverImage: '/mybooks/the-institutinnal-ict.jpg',
     tags: ['IPDA', 'Textbook', 'MSS', 'Kill Zones', 'Execution Models'],
-    kindlePrice: 'Free',
-    paperbackPrice: '$7.90',
+    kindlePrice: '$7.90',
+    paperbackPrice: '$17.90',
     kindleUnlimited: true,
     amazon: 'https://www.amazon.com/dp/YOUR_ASIN_5',
     hook: 'The textbook. Every concept, unified into one structured curriculum.',
@@ -159,8 +159,8 @@ const BOOKS = [
     cardBorder: '#1e4028',
     coverImage: '/mybooks/the-disciplined-edge.jpg',
     tags: ['Psychology', 'Discipline', 'Prop Firm Mindset', 'Risk Management'],
-    kindlePrice: 'Free',
-    paperbackPrice: '$4.99',
+    kindlePrice: '$4.99',
+    paperbackPrice: '$11.99',
     kindleUnlimited: true,
     amazon: 'https://www.amazon.com/dp/YOUR_ASIN_6',
     hook: 'You know the strategy. So why are you still losing?',
@@ -179,17 +179,23 @@ const BOOKS = [
 // ── Book Cover ─────────────────────────────────────────────
 function BookCover({ book, size = 'md' }: { book: typeof BOOKS[0]; size?: 'sm' | 'md' | 'lg' | 'xl' }) {
   const dims = {
-    sm: 'w-[72px] h-[104px]',
-    md: 'w-[110px] h-[160px]',
-    lg: 'w-[148px] h-[215px]',
-    xl: 'w-[180px] h-[260px]',
+    sm: 'w-[96px] h-[138px]',
+    md: 'w-[132px] h-[192px]',
+    lg: 'w-[170px] h-[246px]',
+    xl: 'w-[200px] h-[290px]',
+  }
+  const imageSizes = {
+    sm: '96px',
+    md: '132px',
+    lg: '170px',
+    xl: '200px',
   }
   return (
     <div className={cn(dims[size], 'rounded-xl overflow-hidden shrink-0 relative')}
       style={{
         boxShadow: `0 25px 50px -10px ${book.accentColor}35, 0 0 0 1px ${book.accentColor}20`,
       }}>
-      <Image src={book.coverImage} alt={book.title} fill sizes="200px" className="object-cover" />
+      <Image src={book.coverImage} alt={book.title} fill sizes={imageSizes[size]} className="object-cover" />
     </div>
   )
 }
@@ -209,23 +215,28 @@ function BookModal({ book, onClose }: { book: typeof BOOKS[0]; onClose: () => vo
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={onClose}>
       <div className="absolute inset-0 bg-black/80 backdrop-blur-md" />
       <div
-        className="relative w-full sm:max-w-xl max-h-[92vh] overflow-y-auto rounded-t-3xl sm:rounded-2xl border"
+        className="relative w-full sm:max-w-xl max-h-[92vh] overflow-y-auto rounded-t-3xl sm:rounded-2xl border border-border bg-card dark:border-transparent dark:bg-transparent"
         style={{
-          background: book.cardBg,
-          borderColor: book.cardBorder,
           boxShadow: `0 -20px 80px -10px ${book.accentColor}25`,
         }}
         onClick={e => e.stopPropagation()}>
+        <div
+          className="absolute inset-0 hidden dark:block rounded-t-3xl sm:rounded-2xl pointer-events-none"
+          style={{
+            background: book.cardBg,
+            border: `1px solid ${book.cardBorder}`,
+          }}
+        />
 
         {/* Drag handle (mobile) */}
         <div className="flex justify-center pt-3 pb-1 sm:hidden">
-          <div className="w-10 h-1 rounded-full bg-white/20" />
+          <div className="w-10 h-1 rounded-full bg-muted-foreground/30 dark:bg-white/20" />
         </div>
 
         {/* Top glow line */}
-        <div className="h-px mx-6 mt-1 sm:mt-0 rounded-full" style={{ background: `linear-gradient(90deg, transparent, ${book.accentColor}80, transparent)` }} />
+        <div className="relative h-px mx-6 mt-1 sm:mt-0 rounded-full" style={{ background: `linear-gradient(90deg, transparent, ${book.accentColor}80, transparent)` }} />
 
-        <div className="p-6 space-y-5">
+        <div className="relative p-6 space-y-5">
           {/* Header row */}
           <div className="flex items-start gap-5">
             <BookCover book={book} size="lg" />
@@ -233,21 +244,21 @@ function BookModal({ book, onClose }: { book: typeof BOOKS[0]; onClose: () => vo
               <div className="flex items-start justify-between gap-2">
                 <LevelBadge book={book} />
                 <button onClick={onClose}
-                  className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors shrink-0">
-                  <X className="w-3.5 h-3.5 text-white/60" />
+                  className="w-8 h-8 rounded-full bg-muted border border-border dark:bg-white/5 dark:border-white/10 flex items-center justify-center hover:bg-muted/80 dark:hover:bg-white/10 transition-colors shrink-0">
+                  <X className="w-3.5 h-3.5 text-muted-foreground dark:text-white/60" />
                 </button>
               </div>
-              <h2 className="text-base font-black mt-3 leading-tight text-white">{book.title}</h2>
+              <h2 className="text-base font-black mt-3 leading-tight text-foreground dark:text-white">{book.title}</h2>
               <p className="text-xs mt-1 leading-relaxed" style={{ color: `${book.accentColor}aa` }}>{book.subtitle}</p>
-              <p className="text-xs mt-3 italic text-white/50 leading-relaxed">&ldquo;{book.hook}&rdquo;</p>
+              <p className="text-xs mt-3 italic text-muted-foreground dark:text-white/50 leading-relaxed">&ldquo;{book.hook}&rdquo;</p>
             </div>
           </div>
 
           {/* Divider */}
-          <div className="h-px bg-white/5" />
+          <div className="h-px bg-border dark:bg-white/5" />
 
           {/* Description */}
-          <p className="text-xs text-white/60 leading-relaxed">{book.fullDescription}</p>
+          <p className="text-xs text-muted-foreground dark:text-white/60 leading-relaxed">{book.fullDescription}</p>
 
           {/* What you'll learn */}
           <div className="rounded-xl p-4 space-y-3" style={{ background: `${book.accentColor}08`, border: `1px solid ${book.accentColor}20` }}>
@@ -258,7 +269,7 @@ function BookModal({ book, onClose }: { book: typeof BOOKS[0]; onClose: () => vo
                   style={{ background: `${book.accentColor}20`, border: `1px solid ${book.accentColor}40` }}>
                   <div className="w-1.5 h-1.5 rounded-full" style={{ background: book.accentColor }} />
                 </div>
-                <p className="text-xs text-white/80">{h}</p>
+                <p className="text-xs text-foreground dark:text-white/80">{h}</p>
               </div>
             ))}
           </div>
@@ -274,17 +285,20 @@ function BookModal({ book, onClose }: { book: typeof BOOKS[0]; onClose: () => vo
           </div>
 
           {/* CTA section */}
-          <div className="rounded-2xl p-4 space-y-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+          <div className="rounded-2xl p-4 space-y-3 border border-border bg-muted/30 dark:bg-white/5 dark:border-white/10">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-white/40 mb-0.5">Kindle</p>
+                <p className="text-xs text-muted-foreground dark:text-white/40 mb-0.5">Kindle</p>
                 <p className="text-lg font-black" style={{ color: book.accentColor }}>
-                  {book.kindleUnlimited ? 'Free with KU' : book.kindlePrice}
+                  {book.kindlePrice}
                 </p>
+                {book.kindleUnlimited && (
+                  <p className="text-[10px] text-emerald-500 mt-0.5">Free with Kindle Unlimited</p>
+                )}
               </div>
               <div className="text-right">
-                <p className="text-xs text-white/40 mb-0.5">Paperback</p>
-                <p className="text-sm font-bold text-white/70">{book.paperbackPrice}</p>
+                <p className="text-xs text-muted-foreground dark:text-white/40 mb-0.5">Paperback</p>
+                <p className="text-sm font-bold text-foreground/80 dark:text-white/70">{book.paperbackPrice}</p>
               </div>
             </div>
             <a href={book.amazon} target="_blank" rel="noopener noreferrer"
@@ -304,12 +318,16 @@ function BookModal({ book, onClose }: { book: typeof BOOKS[0]; onClose: () => vo
 function FeaturedBook({ book, onOpen }: { book: typeof BOOKS[0]; onOpen: () => void }) {
   return (
     <div className="relative rounded-2xl overflow-hidden cursor-pointer group"
-      style={{
-        background: book.cardBg,
-        border: `1px solid ${book.cardBorder}`,
-        boxShadow: `0 0 60px -15px ${book.accentColor}30`,
-      }}
+      style={{ boxShadow: `0 0 60px -15px ${book.accentColor}30` }}
       onClick={onOpen}>
+      <div className="absolute inset-0 bg-card border border-border dark:hidden" />
+      <div
+        className="absolute inset-0 hidden dark:block pointer-events-none"
+        style={{
+          background: book.cardBg,
+          border: `1px solid ${book.cardBorder}`,
+        }}
+      />
 
       {/* Animated top shimmer */}
       <div className="absolute top-0 inset-x-0 h-px"
@@ -335,15 +353,15 @@ function FeaturedBook({ book, onOpen }: { book: typeof BOOKS[0]; onOpen: () => v
           </div>
 
           <div>
-            <h3 className="text-xl sm:text-2xl font-black leading-tight text-white">{book.title}</h3>
+            <h3 className="text-xl sm:text-2xl font-black leading-tight text-foreground dark:text-white">{book.title}</h3>
             <p className="text-sm mt-1" style={{ color: `${book.accentColor}99` }}>{book.subtitle}</p>
           </div>
 
-          <p className="text-sm italic text-white/50 leading-relaxed border-l-2 pl-3" style={{ borderColor: `${book.accentColor}50` }}>
+          <p className="text-sm italic text-muted-foreground dark:text-white/50 leading-relaxed border-l-2 pl-3" style={{ borderColor: `${book.accentColor}50` }}>
             &ldquo;{book.hook}&rdquo;
           </p>
 
-          <p className="text-xs text-white/60 leading-relaxed">{book.shortDesc}</p>
+          <p className="text-xs text-muted-foreground dark:text-white/60 leading-relaxed">{book.shortDesc}</p>
 
           <div className="flex flex-wrap gap-1.5">
             {book.tags.map(tag => (
@@ -356,12 +374,15 @@ function FeaturedBook({ book, onOpen }: { book: typeof BOOKS[0]; onOpen: () => v
 
           <div className="flex items-center gap-4 pt-1">
             <div>
-              <p className="text-xs text-white/40">Kindle</p>
+              <p className="text-xs text-muted-foreground dark:text-white/40">Kindle</p>
               <p className="text-2xl font-black" style={{ color: book.accentColor }}>{book.kindlePrice}</p>
+              {book.kindleUnlimited && (
+                <p className="text-[10px] text-emerald-500 mt-0.5">Free with Kindle Unlimited</p>
+              )}
             </div>
             <div>
-              <p className="text-xs text-white/40">Paperback</p>
-              <p className="text-base font-bold text-white/60">{book.paperbackPrice}</p>
+              <p className="text-xs text-muted-foreground dark:text-white/40">Paperback</p>
+              <p className="text-base font-bold text-foreground/80 dark:text-white/60">{book.paperbackPrice}</p>
             </div>
             <button
               onClick={e => { e.stopPropagation(); window.open(book.amazon, '_blank') }}
@@ -381,10 +402,8 @@ function FeaturedBook({ book, onOpen }: { book: typeof BOOKS[0]; onOpen: () => v
 function BookCard({ book, onOpen }: { book: typeof BOOKS[0]; onOpen: () => void }) {
   return (
     <div onClick={onOpen}
-      className="group relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1"
+      className="group relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 border border-border dark:border-transparent bg-card dark:bg-transparent"
       style={{
-        background: book.cardBg,
-        border: `1px solid ${book.cardBorder}`,
         boxShadow: `0 4px 24px -8px ${book.accentColor}20`,
       }}
       onMouseEnter={e => {
@@ -393,6 +412,13 @@ function BookCard({ book, onOpen }: { book: typeof BOOKS[0]; onOpen: () => void 
       onMouseLeave={e => {
         (e.currentTarget as HTMLElement).style.boxShadow = `0 4px 24px -8px ${book.accentColor}20`
       }}>
+      <div
+        className="absolute inset-0 hidden dark:block pointer-events-none"
+        style={{
+          background: book.cardBg,
+          border: `1px solid ${book.cardBorder}`,
+        }}
+      />
 
       {/* Top accent shimmer */}
       <div className="absolute top-0 inset-x-0 h-px opacity-0 group-hover:opacity-100 transition-opacity duration-300"
@@ -409,19 +435,22 @@ function BookCard({ book, onOpen }: { book: typeof BOOKS[0]; onOpen: () => void 
           <LevelBadge book={book} />
 
           <div>
-            <h3 className="text-sm font-black leading-snug text-white line-clamp-2">{book.title}</h3>
+            <h3 className="text-sm font-black leading-snug text-foreground dark:text-white line-clamp-2">{book.title}</h3>
             <p className="text-[11px] mt-0.5" style={{ color: `${book.accentColor}80` }}>{book.subtitle}</p>
           </div>
 
-          <p className="text-[11px] italic text-white/40 line-clamp-2 leading-relaxed">&ldquo;{book.hook}&rdquo;</p>
+          <p className="text-[11px] italic text-muted-foreground dark:text-white/40 line-clamp-2 leading-relaxed">&ldquo;{book.hook}&rdquo;</p>
 
           <div className="flex items-end justify-between gap-2 pt-0.5">
             <div>
               <p className="text-xs font-black" style={{ color: book.accentColor }}>
-                {book.kindleUnlimited ? 'Free with KU' : book.kindlePrice}
-                <span className="text-[10px] font-normal text-white/30 ml-1">Kindle</span>
+                {book.kindlePrice}
+                <span className="text-[10px] font-normal text-muted-foreground dark:text-white/30 ml-1">Kindle</span>
               </p>
-              <p className="text-[10px] text-white/35 mt-0.5">Paperback {book.paperbackPrice}</p>
+              {book.kindleUnlimited && (
+                <p className="text-[10px] text-emerald-500 mt-0.5">Free with Kindle Unlimited</p>
+              )}
+              <p className="text-[10px] text-muted-foreground dark:text-white/35 mt-0.5">Paperback {book.paperbackPrice}</p>
             </div>
             <button
               onClick={e => { e.stopPropagation(); window.open(book.amazon, '_blank') }}
@@ -449,7 +478,7 @@ export function LibraryClient() {
   const filtered = filter === 'All' ? others : others.filter(b => b.level === filter)
 
   return (
-    <div className="min-h-screen" style={{ background: '#080c10' }}>
+    <div className="min-h-screen bg-background">
       <div className="p-5 sm:p-8 max-w-4xl mx-auto space-y-8">
 
         {/* ── Header ── */}
@@ -458,25 +487,25 @@ export function LibraryClient() {
             <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
               <BookOpen className="w-4 h-4 text-emerald-400" />
             </div>
-            <h1 className="text-2xl font-black tracking-tight text-white">Trading Library</h1>
+            <h1 className="text-2xl font-black tracking-tight text-foreground">Trading Library</h1>
           </div>
-          <p className="text-sm text-white/40 pl-10">
-            Books by <span className="font-semibold text-white/70">Maor Saadia</span> — beginner to institutional-grade funded trader
+          <p className="text-sm text-muted-foreground pl-10">
+            Books by <span className="font-semibold text-foreground">Maor Saadia</span> — beginner to institutional-grade funded trader
           </p>
         </div>
 
         {/* ── Author Banner ── */}
-        <div className="rounded-2xl border border-white/5 overflow-hidden" style={{ background: 'linear-gradient(135deg, #0d1f15 0%, #0f2218 100%)' }}>
+        <div className="rounded-2xl overflow-hidden border border-emerald-500/15 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-[#0d1f15] dark:to-[#0f2218] dark:border-white/5">
           <div className="px-5 py-4 flex items-center gap-4">
             <div className="w-11 h-11 rounded-xl bg-emerald-500 flex items-center justify-center shrink-0 font-black text-black text-sm shadow-lg shadow-emerald-500/30">
               MS
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-white">Maor Saadia — Founder of MSFunded</p>
-              <p className="text-xs text-white/40 mt-0.5">Professional futures trader · ICT & Smart Money Concepts · These books are the exact curriculum behind this platform.</p>
+              <p className="text-sm font-bold text-foreground dark:text-white">Maor Saadia — Founder of MSFunded</p>
+              <p className="text-xs text-muted-foreground dark:text-white/40 mt-0.5">Professional futures trader · ICT & Smart Money Concepts · These books are the exact curriculum behind this platform.</p>
             </div>
             <div className="shrink-0 text-right hidden sm:block">
-              <p className="text-[10px] text-white/30 uppercase tracking-wider">6 Books</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">6 Books</p>
               <p className="text-xs font-bold text-emerald-400 mt-0.5">All on Amazon</p>
             </div>
           </div>
@@ -487,7 +516,7 @@ export function LibraryClient() {
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <p className="text-[10px] font-bold uppercase tracking-widest text-white/30">Featured · Complete Series</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">Featured · Complete Series</p>
             </div>
             <FeaturedBook book={featured} onOpen={() => setSelectedBook(featured)} />
           </div>
@@ -495,7 +524,7 @@ export function LibraryClient() {
 
         {/* ── Filter Tabs ── */}
         <div className="space-y-3">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-white/30">All Books</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">All Books</p>
           <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
             {levels.map(level => (
               <button key={level}
@@ -504,7 +533,7 @@ export function LibraryClient() {
                   'shrink-0 text-[10px] font-bold px-3.5 py-1.5 rounded-lg border transition-all',
                   filter === level
                     ? 'bg-emerald-500 text-black border-emerald-500 shadow-lg shadow-emerald-500/30'
-                    : 'border-white/8 text-white/40 hover:text-white/70 hover:border-white/15'
+                    : 'border-border text-muted-foreground hover:text-foreground hover:border-foreground/20'
                 )}>
                 {level}
               </button>
@@ -520,13 +549,13 @@ export function LibraryClient() {
         </div>
 
         {/* ── Bottom Tip ── */}
-        <div className="rounded-2xl border border-white/5 px-5 py-4 text-center" style={{ background: 'rgba(255,255,255,0.02)' }}>
-          <p className="text-xs text-white/40 leading-relaxed">
-            <span className="text-white/60 font-semibold">💡 Recommended path:</span>{' '}
-            Start with <em className="text-white/55">Day Trading for Beginners</em>, advance to{' '}
-            <em className="text-white/55">Smart Money, Simplified</em>, then master{' '}
-            <em className="text-white/55">The ICT Playbook</em>. Or grab the{' '}
-            <em className="text-amber-400/80">Masterclass</em> for all three at once.
+        <div className="rounded-2xl border border-border px-5 py-4 text-center bg-muted/20">
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            <span className="text-foreground font-semibold">💡 Recommended path:</span>{' '}
+            Start with <em className="text-foreground/80">Day Trading for Beginners</em>, advance to{' '}
+            <em className="text-foreground/80">Smart Money, Simplified</em>, then master{' '}
+            <em className="text-foreground/80">The ICT Playbook</em>. Or grab the{' '}
+            <em className="text-amber-500 dark:text-amber-400/80">Masterclass</em> for all three at once.
           </p>
         </div>
 
