@@ -28,6 +28,7 @@ const NAV = [
     section: 'STRATEGY',
     items: [
       { href: '/playbook',   icon: FileText,    label: 'Playbook',    },
+      { href: '/library',    icon: BookOpen,    label: 'Library' },
       { href: '/compare',    icon: GitCompare,  label: 'Compare',     badge: 'NEW' },
       { href: '/propfirms',  icon: Building2,   label: 'Prop Firms' },
     ],
