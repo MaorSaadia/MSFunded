@@ -495,7 +495,7 @@ export function LibraryClient() {
         </div>
 
         {/* ── Author Banner ── */}
-        <div className="rounded-2xl overflow-hidden border border-emerald-500/15 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-[#0d1f15] dark:to-[#0f2218] dark:border-white/5">
+        <div className="rounded-2xl overflow-hidden border border-emerald-500/15 bg-linear-to-br from-emerald-50 to-emerald-100 dark:from-[#0d1f15] dark:to-[#0f2218] dark:border-white/5">
           <div className="px-5 py-4 flex items-center gap-4">
             <div className="w-11 h-11 rounded-xl bg-emerald-500 flex items-center justify-center shrink-0 font-black text-black text-sm shadow-lg shadow-emerald-500/30">
               MS
