@@ -17,14 +17,16 @@ const FIRM_COLORS = [
 ]
 
 const PRESET_FIRMS = [
-  { name: 'Apex Trader Funding', short: 'Apex', color: '#3b82f6' },
-  { name: 'TopStep', short: 'TS', color: '#10b981' },
-  { name: 'FTMO', short: 'FTMO', color: '#8b5cf6' },
-  { name: 'Earn2Trade', short: 'E2T', color: '#f59e0b' },
-  { name: 'My Funded Futures', short: 'MFF', color: '#06b6d4' },
-  { name: 'Leeloo Trading', short: 'Lee', color: '#ec4899' },
-  { name: 'Funded Trading Plus', short: 'FTP', color: '#84cc16' },
-  { name: 'Custom', short: '', color: '#64748b' },
+  { name: 'Apex Trader Funding', short: 'Apex', chip: 'Apex', color: '#3b82f6' },
+  { name: 'Take Profit Trader', short: 'TPT', chip: 'TPT', color: '#f59e0b' },
+  { name: 'Lucid', short: 'LUC', chip: 'Lucid', color: '#8b5cf6' },
+  { name: 'Alpha Futures', short: 'ALPH', chip: 'Alpha', color: '#06b6d4' },
+  { name: 'TopStep', short: 'TS', chip: 'TopStep', color: '#10b981' },
+  { name: 'My Funded Futures', short: 'MFFU', chip: 'MFFU', color: '#ec4899' },
+  { name: 'Tradeify', short: 'TRD', chip: 'Tradeify', color: '#84cc16' },
+  { name: 'FTMO', short: 'FTMO', chip: 'FTMO', color: '#ef4444' },
+  { name: 'FundedNext', short: 'FN', chip: 'FundedNext', color: '#14b8a6' },
+  { name: 'Custom', short: '', chip: '+ Other', color: '#64748b' },
 ]
 
 interface Props {
@@ -38,9 +40,15 @@ export function AddFirmModal({ open, onOpenChange, onSaved }: Props) {
   const [shortName, setShortName] = useState('')
   const [color, setColor] = useState(FIRM_COLORS[0])
   const [loading, setLoading] = useState(false)
+  const [selectedPresetName, setSelectedPresetName] = useState<string | null>(null)
 
   function selectPreset(preset: typeof PRESET_FIRMS[0]) {
-    if (preset.name === 'Custom') { setName(''); setShortName(''); return }
+    setSelectedPresetName(preset.name)
+    if (preset.name === 'Custom') {
+      setName('')
+      setShortName('')
+      return
+    }
     setName(preset.name)
     setShortName(preset.short)
     setColor(preset.color)
@@ -56,12 +64,20 @@ export function AddFirmModal({ open, onOpenChange, onSaved }: Props) {
         body: JSON.stringify({ name, shortName, logoColor: color }),
       })
       const data = await res.json()
-      if (!res.ok) { toast.error(data.error ?? 'Failed'); return }
+      if (!res.ok) {
+        toast.error(data.error ?? 'Failed')
+        return
+      }
       toast.success(`${name} added!`)
-      setName(''); setShortName('')
+      setName('')
+      setShortName('')
+      setSelectedPresetName(null)
       onSaved()
-    } catch { toast.error('Network error') }
-    finally { setLoading(false) }
+    } catch {
+      toast.error('Network error')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -73,61 +89,76 @@ export function AddFirmModal({ open, onOpenChange, onSaved }: Props) {
         </DialogHeader>
 
         <form onSubmit={handleSave} className="space-y-5">
-          {/* Preset buttons */}
           <div>
-            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
+            <Label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Quick Select
             </Label>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
               {PRESET_FIRMS.map(preset => (
-                <button key={preset.name} type="button"
+                <button
+                  key={preset.name}
+                  type="button"
                   onClick={() => selectPreset(preset)}
                   className={cn(
-                    'rounded-lg border px-2 py-2.5 text-xs font-bold transition-all text-center',
-                    name === preset.name
+                    'rounded-lg border px-2 py-2 text-center text-xs font-bold transition-all',
+                    selectedPresetName === preset.name
                       ? 'border-2 border-emerald-500 bg-emerald-500/10 text-emerald-500'
-                      : 'border-border text-muted-foreground hover:text-foreground hover:border-border/80'
+                      : 'border-border text-muted-foreground hover:border-border/80 hover:text-foreground'
                   )}
                 >
-                  {preset.name === 'Custom' ? '✏️ Custom' : preset.short}
+                  {preset.chip}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Name */}
           <div className="space-y-1.5">
             <Label htmlFor="firm-name">Firm Name</Label>
-            <Input id="firm-name" value={name} onChange={e => setName(e.target.value)}
-              placeholder="e.g. Apex Trader Funding" required />
+            <Input
+              id="firm-name"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder="e.g. Apex Trader Funding"
+              required
+            />
           </div>
 
-          {/* Short name + color */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="firm-short" className="text-xs">Short Name (2-4 chars)</Label>
-              <Input id="firm-short" value={shortName} onChange={e => setShortName(e.target.value)}
-                placeholder="e.g. Apex" maxLength={4} />
+              <Input
+                id="firm-short"
+                value={shortName}
+                onChange={e => setShortName(e.target.value)}
+                placeholder="e.g. Apex"
+                maxLength={4}
+              />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Brand Color</Label>
-              <div className="flex gap-1.5 flex-wrap">
+              <div className="flex flex-wrap gap-1.5">
                 {FIRM_COLORS.map(c => (
-                  <button key={c} type="button" onClick={() => setColor(c)}
-                    className={cn('w-6 h-6 rounded-full transition-all border-2',
-                      color === c ? 'border-white scale-110' : 'border-transparent'
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setColor(c)}
+                    className={cn(
+                      'h-6 w-6 rounded-full border-2 transition-all',
+                      color === c ? 'scale-110 border-white' : 'border-transparent'
                     )}
-                    style={{ background: c }} />
+                    style={{ background: c }}
+                  />
                 ))}
               </div>
             </div>
           </div>
 
-          {/* Preview */}
           {name && (
-            <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
-              <div className="w-9 h-9 rounded-lg flex items-center justify-center text-white text-xs font-black"
-                style={{ background: color }}>
+            <div className="flex items-center gap-3 rounded-lg bg-muted/30 p-3">
+              <div
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-xs font-black text-white"
+                style={{ background: color }}
+              >
                 {(shortName || name).slice(0, 2).toUpperCase()}
               </div>
               <span className="text-sm font-bold">{name}</span>
@@ -138,9 +169,12 @@ export function AddFirmModal({ open, onOpenChange, onSaved }: Props) {
             <Button type="button" variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={loading || !name}
-              className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-black font-bold">
-              {loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Adding...</> : 'Add Firm'}
+            <Button
+              type="submit"
+              disabled={loading || !name}
+              className="flex-1 bg-emerald-500 font-bold text-black hover:bg-emerald-600"
+            >
+              {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Adding...</> : 'Add Firm'}
             </Button>
           </div>
         </form>

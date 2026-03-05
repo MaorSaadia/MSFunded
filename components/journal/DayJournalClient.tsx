@@ -250,7 +250,7 @@ export function DayJournalClient({
                       <CardTitle className="text-base font-black flex items-center gap-2">
                         <span>{trade.symbol}</span>
                         <Badge variant="outline" className="text-[10px] uppercase">{trade.side}</Badge>
-                        {isConsolidated && (
+                        {isConsolidated && trade.partials.length > 1 && (
                           <Badge variant="outline" className="text-[10px]">Consolidated {trade.partials.length} partials</Badge>
                         )}
                       </CardTitle>

@@ -93,6 +93,18 @@ const PROP_FIRMS = [
   },
 ]
 
+const FIRM_BUTTON_LABEL: Record<string, string> = {
+  Apex: 'Apex',
+  TPT: 'TPT',
+  Lucid: 'Lucid',
+  Alpha: 'Alpha',
+  TopStep: 'TopStep',
+  MFF: 'MFFU',
+  Tradeify: 'Tradeify',
+  FTMO: 'FTMO',
+  FundedNext: 'FundedNext',
+}
+
 interface Props {
   firmId: string | null
   onClose: () => void
@@ -195,7 +207,7 @@ export function AddAccountModal({ firmId, onClose, onSaved, allTrades }: Props) 
                       ? 'bg-emerald-500 text-black border-emerald-500'
                       : 'border-border text-muted-foreground hover:text-foreground hover:border-emerald-500/40 hover:bg-emerald-500/5'
                   )}>
-                  {f.firm}
+                  {FIRM_BUTTON_LABEL[f.firm] ?? f.firm}
                 </button>
               ))}
               {/* Custom / Other firm */}
@@ -204,8 +216,8 @@ export function AddAccountModal({ firmId, onClose, onSaved, allTrades }: Props) 
                 className={cn(
                   'text-xs px-2.5 py-1.5 rounded-lg border font-semibold transition-all',
                   selectedFirm === 'custom'
-                    ? 'bg-amber-500 text-black border-amber-500'
-                    : 'border-dashed border-border text-muted-foreground hover:text-foreground hover:border-amber-500/40 hover:bg-amber-500/5'
+                    ? 'bg-emerald-500 text-black border-emerald-500'
+                    : 'border-dashed border-border text-muted-foreground hover:text-foreground hover:border-emerald-500/40 hover:bg-emerald-500/5'
                 )}>
                 + Other
               </button>
