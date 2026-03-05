@@ -1,0 +1,1191 @@
+{
+  "meta": {
+    "as_of_date": "2026-03-05",
+    "timezone": "Asia/Jerusalem",
+    "currency": "USD",
+    "verify_marker": "[VERIFY]",
+    "notes": [
+      "Rules can change. Treat this as a snapshot as of the as_of_date.",
+      "Any field containing [VERIFY] should be rechecked on the official site before production use.",
+      "Some firms offer multiple programs; data is organized by program_key under each firm."
+    ]
+  },
+  "firms": [
+    {
+      "firm_key": "apex_trader_funding",
+      "firm_name": "Apex Trader Funding",
+      "programs": [
+        {
+          "program_key": "eod_trailing_drawdown",
+          "program_name": "EOD Trailing Drawdown (Evaluation -> PA)",
+          "account_sizes": [
+            {
+              "account_size_usd": 25000,
+              "evaluation": {
+                "profit_target_usd": 1500,
+                "max_drawdown": {
+                  "amount_usd": 1000,
+                  "type": "eod_trailing",
+                  "calculation": "calculated once per day at market close; enforced intraday next session",
+                  "lock_behavior": "evaluation may lock at target-profit balance on some platforms [VERIFY]"
+                },
+                "daily_loss_limit_usd": 500,
+                "min_trading_days": 0,
+                "max_trading_days": 30,
+                "consistency_rules": [],
+                "news_trading": { "allowed": "[VERIFY]", "details": "Not explicitly stated for EOD Evaluation pages; prohibited hedging across accounts applies." },
+                "weekend_holding": {
+                  "allowed": false,
+                  "details": "All trades must be closed before 4:59 PM ET (daily close requirement)."
+                },
+                "special_rules": [
+                  "No minimum trading days required; may pass in one day.",
+                  "Hedging across accounts to pass is prohibited."
+                ]
+              },
+              "funded": {
+                "phase_name": "EOD Performance Account (PA) - Sim Funded",
+                "profit_target_usd": null,
+                "max_drawdown": {
+                  "amount_usd": 1000,
+                  "type": "eod_trailing_with_lock",
+                  "lock_level": "starting_balance_plus_100",
+                  "details": "EOD threshold trails up based on EOD balance; stops increasing once it reaches Starting Balance + $100."
+                },
+                "daily_loss_limit": {
+                  "type": "tier_based",
+                  "tiers": [
+                    { "profit_range_usd": [0, 999], "max_contracts": 1, "daily_loss_limit_usd": 500, "tier": 1 },
+                    { "profit_range_usd": [1000, 1999], "max_contracts": 2, "daily_loss_limit_usd": 500, "tier": 2 },
+                    { "profit_range_usd": [2000, null], "max_contracts": 2, "daily_loss_limit_usd": 1250, "tier": 3 }
+                  ]
+                },
+                "consistency_rules": [
+                  { "rule": "payout_50_percent_consistency", "details": "No single profitable day may be >= 50% of total profit since last approved payout." }
+                ],
+                "news_trading": { "allowed": true, "details": "Allowed with restrictions in Apex compliance guidance; avoid opposing positions on same news event." },
+                "weekend_holding": { "allowed": false, "details": "Must be flat before 4:59 PM ET." },
+                "payout_rules": {
+                  "profit_split_percent_to_trader": 100,
+                  "min_trade_days": 5,
+                  "min_daily_profit_usd": 100,
+                  "safety_net_usd": 26100,
+                  "min_balance_to_request_usd": 26600,
+                  "min_payout_usd": 500,
+                  "max_payouts_per_account": 6,
+                  "frequency": "Earliest after 5 qualifying trading days; weekly cadence possible"
+                },
+                "scaling_plan": {
+                  "type": "tier_based_scaling",
+                  "max_contracts_cap": 2,
+                  "details": "Contract/DLL tiers are set based on prior session EOD balance; tiers do not change intraday."
+                },
+                "other_rules": [
+                  "Inactivity: must record at least 2 trading days with $50+ net profit in every rolling 30 days or PA closes."
+                ]
+              }
+            },
+            {
+              "account_size_usd": 50000,
+              "evaluation": {
+                "profit_target_usd": 3000,
+                "max_drawdown": { "amount_usd": 2000, "type": "eod_trailing", "calculation": "EOD close-based trailing; enforced intraday", "lock_behavior": "evaluation may lock at target-profit balance on some platforms [VERIFY]" },
+                "daily_loss_limit_usd": 1000,
+                "min_trading_days": 0,
+                "max_trading_days": 30,
+                "consistency_rules": [],
+                "news_trading": { "allowed": "[VERIFY]", "details": "Not explicitly stated for EOD Evaluation; prohibited hedging across accounts applies." },
+                "weekend_holding": { "allowed": false, "details": "Must be flat before 4:59 PM ET." },
+                "special_rules": ["No min trading days; may pass in one day.", "Hedging across accounts prohibited."]
+              },
+              "funded": {
+                "phase_name": "EOD PA - Sim Funded",
+                "profit_target_usd": null,
+                "max_drawdown": { "amount_usd": 2000, "type": "eod_trailing_with_lock", "lock_level": "starting_balance_plus_100" },
+                "daily_loss_limit": {
+                  "type": "tier_based",
+                  "tiers": [
+                    { "profit_range_usd": [0, 1499], "max_contracts": 2, "daily_loss_limit_usd": 1000, "tier": 1 },
+                    { "profit_range_usd": [1500, 2999], "max_contracts": 3, "daily_loss_limit_usd": 1000, "tier": 2 },
+                    { "profit_range_usd": [3000, 5999], "max_contracts": 4, "daily_loss_limit_usd": 2000, "tier": 3 },
+                    { "profit_range_usd": [6000, null], "max_contracts": 4, "daily_loss_limit_usd": 3000, "tier": 4 }
+                  ]
+                },
+                "consistency_rules": [{ "rule": "payout_50_percent_consistency", "details": "No single day may be >=50% of profit since last approved payout." }],
+                "news_trading": { "allowed": true, "details": "Allowed with restrictions per Apex compliance guidance." },
+                "weekend_holding": { "allowed": false, "details": "Flat before 4:59 PM ET." },
+                "payout_rules": {
+                  "profit_split_percent_to_trader": 100,
+                  "min_trade_days": 5,
+                  "min_daily_profit_usd": 250,
+                  "safety_net_usd": 52100,
+                  "min_balance_to_request_usd": 52600,
+                  "min_payout_usd": 500,
+                  "max_payouts_per_account": 6
+                },
+                "scaling_plan": { "type": "tier_based_scaling", "max_contracts_cap": 4 }
+              }
+            },
+            {
+              "account_size_usd": 100000,
+              "evaluation": {
+                "profit_target_usd": 6000,
+                "max_drawdown": { "amount_usd": 3000, "type": "eod_trailing", "calculation": "EOD close-based trailing; enforced intraday", "lock_behavior": "evaluation may lock at target-profit balance on some platforms [VERIFY]" },
+                "daily_loss_limit_usd": 1500,
+                "min_trading_days": 0,
+                "max_trading_days": 30,
+                "consistency_rules": [],
+                "news_trading": { "allowed": "[VERIFY]", "details": "Not explicitly stated for EOD Evaluation." },
+                "weekend_holding": { "allowed": false, "details": "Flat before 4:59 PM ET." },
+                "special_rules": ["Hedging across accounts prohibited."]
+              },
+              "funded": {
+                "phase_name": "EOD PA - Sim Funded",
+                "profit_target_usd": null,
+                "max_drawdown": { "amount_usd": 3000, "type": "eod_trailing_with_lock", "lock_level": "starting_balance_plus_100" },
+                "daily_loss_limit": {
+                  "type": "tier_based",
+                  "tiers": [
+                    { "profit_range_usd": [0, 1999], "max_contracts": 3, "daily_loss_limit_usd": 1750, "tier": 1 },
+                    { "profit_range_usd": [2000, 2999], "max_contracts": 4, "daily_loss_limit_usd": 1750, "tier": 2 },
+                    { "profit_range_usd": [3000, 4999], "max_contracts": 5, "daily_loss_limit_usd": 1750, "tier": 3 },
+                    { "profit_range_usd": [5000, 9999], "max_contracts": 6, "daily_loss_limit_usd": 2500, "tier": 4 },
+                    { "profit_range_usd": [10000, null], "max_contracts": 6, "daily_loss_limit_usd": 3500, "tier": 5 }
+                  ]
+                },
+                "consistency_rules": [{ "rule": "payout_50_percent_consistency" }],
+                "news_trading": { "allowed": true, "details": "Allowed with restrictions per Apex compliance guidance." },
+                "weekend_holding": { "allowed": false, "details": "Flat before 4:59 PM ET." },
+                "payout_rules": {
+                  "profit_split_percent_to_trader": 100,
+                  "min_trade_days": 5,
+                  "min_daily_profit_usd": 300,
+                  "safety_net_usd": 103100,
+                  "min_balance_to_request_usd": 103600,
+                  "min_payout_usd": 500,
+                  "max_payouts_per_account": 6
+                },
+                "scaling_plan": { "type": "tier_based_scaling", "max_contracts_cap": 6 }
+              }
+            },
+            {
+              "account_size_usd": 150000,
+              "evaluation": {
+                "profit_target_usd": 9000,
+                "max_drawdown": { "amount_usd": 4000, "type": "eod_trailing", "calculation": "EOD close-based trailing; enforced intraday", "lock_behavior": "evaluation may lock at target-profit balance on some platforms [VERIFY]" },
+                "daily_loss_limit_usd": 2000,
+                "min_trading_days": 0,
+                "max_trading_days": 30,
+                "consistency_rules": [],
+                "news_trading": { "allowed": "[VERIFY]" },
+                "weekend_holding": { "allowed": false, "details": "Flat before 4:59 PM ET." }
+              },
+              "funded": {
+                "phase_name": "EOD PA - Sim Funded",
+                "profit_target_usd": null,
+                "max_drawdown": { "amount_usd": 4000, "type": "eod_trailing_with_lock", "lock_level": "starting_balance_plus_100" },
+                "daily_loss_limit": {
+                  "type": "tier_based",
+                  "tiers": [
+                    { "profit_range_usd": [0, 1999], "max_contracts": 4, "daily_loss_limit_usd": 2500, "tier": 1 },
+                    { "profit_range_usd": [2000, 2999], "max_contracts": 5, "daily_loss_limit_usd": 2500, "tier": 2 },
+                    { "profit_range_usd": [3000, 4999], "max_contracts": 7, "daily_loss_limit_usd": 2500, "tier": 3 },
+                    { "profit_range_usd": [5000, 9999], "max_contracts": 10, "daily_loss_limit_usd": 3000, "tier": 4 },
+                    { "profit_range_usd": [10000, null], "max_contracts": 10, "daily_loss_limit_usd": 4000, "tier": 5 }
+                  ]
+                },
+                "consistency_rules": [{ "rule": "payout_50_percent_consistency" }],
+                "payout_rules": {
+                  "profit_split_percent_to_trader": 100,
+                  "min_trade_days": 5,
+                  "min_daily_profit_usd": 350,
+                  "safety_net_usd": 154100,
+                  "min_balance_to_request_usd": 154600,
+                  "min_payout_usd": 500,
+                  "max_payouts_per_account": 6
+                },
+                "weekend_holding": { "allowed": false }
+              }
+            }
+          ],
+          "program_level_rules": [
+            "EOD Drawdown is calculated at market close and enforced intraday next session; if threshold is touched, positions liquidate and evaluation fails / PA closes.",
+            "Daily Loss Limit (DLL) during EOD Evaluation is fixed by size; during PA it is tier-based and can move with tier."
+          ]
+        },
+        {
+          "program_key": "intraday_trailing_drawdown",
+          "program_name": "Intraday Trailing Drawdown (Evaluation -> PA)",
+          "account_sizes": [
+            {
+              "account_size_usd": 25000,
+              "evaluation": {
+                "profit_target_usd": 1500,
+                "max_drawdown": { "amount_usd": 1000, "type": "intraday_trailing", "details": "Trails peak balance in real time; never moves down." },
+                "daily_loss_limit_usd": null,
+                "min_trading_days": 0,
+                "max_trading_days": 30,
+                "consistency_rules": [],
+                "news_trading": { "allowed": "[VERIFY]" },
+                "weekend_holding": { "allowed": false, "details": "Flat before 4:59 PM ET." }
+              },
+              "funded": {
+                "phase_name": "Intraday PA - Sim Funded",
+                "profit_target_usd": null,
+                "max_drawdown": { "amount_usd": 1000, "type": "intraday_trailing_with_lock", "lock_level": "starting_balance_plus_100" },
+                "daily_loss_limit": { "type": "tier_based", "tiers_reference": "same tier tables under EOD program (tier system applies to Intraday PA too)" },
+                "payout_rules": {
+                  "profit_split_percent_to_trader": 100,
+                  "min_trade_days": 5,
+                  "min_daily_profit_usd": 100,
+                  "safety_net_usd": 26100,
+                  "min_balance_to_request_usd": 26600,
+                  "min_payout_usd": 500,
+                  "max_payouts_per_account": 6
+                },
+                "weekend_holding": { "allowed": false }
+              }
+            },
+            {
+              "account_size_usd": 50000,
+              "evaluation": {
+                "profit_target_usd": 3000,
+                "max_drawdown": { "amount_usd": 2000, "type": "intraday_trailing" },
+                "daily_loss_limit_usd": null,
+                "min_trading_days": 0,
+                "max_trading_days": 30,
+                "consistency_rules": [],
+                "weekend_holding": { "allowed": false }
+              },
+              "funded": {
+                "profit_target_usd": null,
+                "max_drawdown": { "amount_usd": 2000, "type": "intraday_trailing_with_lock", "lock_level": "starting_balance_plus_100" },
+                "payout_rules": {
+                  "profit_split_percent_to_trader": 100,
+                  "min_trade_days": 5,
+                  "min_daily_profit_usd": 200,
+                  "safety_net_usd": 52100,
+                  "min_balance_to_request_usd": 52600,
+                  "min_payout_usd": 500,
+                  "max_payouts_per_account": 6
+                }
+              }
+            },
+            {
+              "account_size_usd": 100000,
+              "evaluation": {
+                "profit_target_usd": 6000,
+                "max_drawdown": { "amount_usd": 3000, "type": "intraday_trailing" },
+                "daily_loss_limit_usd": null,
+                "min_trading_days": 0,
+                "max_trading_days": 30,
+                "consistency_rules": []
+              },
+              "funded": {
+                "profit_target_usd": null,
+                "max_drawdown": { "amount_usd": 3000, "type": "intraday_trailing_with_lock" },
+                "payout_rules": {
+                  "profit_split_percent_to_trader": 100,
+                  "min_trade_days": 5,
+                  "min_daily_profit_usd": 250,
+                  "safety_net_usd": 103100,
+                  "min_balance_to_request_usd": 103600,
+                  "min_payout_usd": 500,
+                  "max_payouts_per_account": 6
+                }
+              }
+            },
+            {
+              "account_size_usd": 150000,
+              "evaluation": {
+                "profit_target_usd": 9000,
+                "max_drawdown": { "amount_usd": 4000, "type": "intraday_trailing" },
+                "daily_loss_limit_usd": null,
+                "min_trading_days": 0,
+                "max_trading_days": 30
+              },
+              "funded": {
+                "profit_target_usd": null,
+                "max_drawdown": { "amount_usd": 4000, "type": "intraday_trailing_with_lock" },
+                "payout_rules": {
+                  "profit_split_percent_to_trader": 100,
+                  "min_trade_days": 5,
+                  "min_daily_profit_usd": 300,
+                  "safety_net_usd": 154100,
+                  "min_balance_to_request_usd": 154600,
+                  "min_payout_usd": 500,
+                  "max_payouts_per_account": 6
+                }
+              }
+            }
+          ]
+        },
+        {
+          "program_key": "legacy_full_and_static",
+          "program_name": "Legacy FULL/STATIC (Evaluation -> Legacy PA)",
+          "account_sizes": [
+            {
+              "account_size_usd": 25000,
+              "evaluation": {
+                "profit_target_usd": 1500,
+                "max_drawdown": { "amount_usd": 1500, "type": "trailing_threshold", "trailing": true },
+                "daily_loss_limit_usd": null,
+                "min_trading_days": 7,
+                "max_trading_days": null,
+                "consistency_rules": [],
+                "weekend_holding": { "allowed": false, "details": "Trades must be closed by 4:59 PM ET." }
+              },
+              "funded": {
+                "profit_target_usd": null,
+                "max_drawdown": { "amount_usd": 1500, "type": "trailing_threshold_with_safety_net", "details": "Trailing stops once liquidation threshold reaches Starting Balance + $100." },
+                "daily_loss_limit_usd": null,
+                "consistency_rules": [
+                  { "rule": "30_percent_negative_pnl_mae", "details": "Open negative P&L per trade must not exceed 30% of profit balance (adjusts to 50% after growth conditions) [Legacy]." },
+                  { "rule": "5_to_1_risk_reward", "details": "Max risk-to-reward ratio 5:1 [Legacy]." },
+                  { "rule": "contract_scaling", "details": "Half contracts until trailing stop threshold reached [Legacy]." }
+                ],
+                "payout_rules": { "profit_split_percent_to_trader": 100, "details": "[VERIFY] Legacy payout schedule/limits vary; see Legacy payouts section." }
+              }
+            },
+            {
+              "account_size_usd": 50000,
+              "evaluation": {
+                "profit_target_usd": 3000,
+                "max_drawdown": { "amount_usd": 2500, "type": "trailing_threshold", "trailing": true },
+                "daily_loss_limit_usd": null,
+                "min_trading_days": 7,
+                "max_trading_days": null
+              },
+              "funded": {
+                "profit_target_usd": null,
+                "max_drawdown": { "amount_usd": 2500, "type": "trailing_threshold_with_safety_net" },
+                "daily_loss_limit_usd": null
+              }
+            },
+            {
+              "account_size_usd": 100000,
+              "evaluation": {
+                "profit_target_usd": 6000,
+                "max_drawdown": { "amount_usd": 3000, "type": "trailing_threshold", "trailing": true },
+                "daily_loss_limit_usd": null,
+                "min_trading_days": 7,
+                "max_trading_days": null
+              },
+              "funded": { "profit_target_usd": null, "max_drawdown": { "amount_usd": 3000, "type": "trailing_threshold_with_safety_net" } }
+            },
+            {
+              "account_size_usd": 150000,
+              "evaluation": {
+                "profit_target_usd": 9000,
+                "max_drawdown": { "amount_usd": 5000, "type": "trailing_threshold", "trailing": true },
+                "daily_loss_limit_usd": null,
+                "min_trading_days": 7,
+                "max_trading_days": null
+              },
+              "funded": { "profit_target_usd": null, "max_drawdown": { "amount_usd": 5000, "type": "trailing_threshold_with_safety_net" } }
+            },
+            {
+              "account_size_usd": 250000,
+              "evaluation": {
+                "profit_target_usd": 15000,
+                "max_drawdown": { "amount_usd": 6500, "type": "trailing_threshold", "trailing": true },
+                "daily_loss_limit_usd": null,
+                "min_trading_days": 7,
+                "max_trading_days": null
+              },
+              "funded": { "profit_target_usd": null, "max_drawdown": { "amount_usd": 6500, "type": "trailing_threshold_with_safety_net" } }
+            },
+            {
+              "account_size_usd": 300000,
+              "evaluation": {
+                "profit_target_usd": 20000,
+                "max_drawdown": { "amount_usd": 7500, "type": "trailing_threshold", "trailing": true },
+                "daily_loss_limit_usd": null,
+                "min_trading_days": 7,
+                "max_trading_days": null
+              },
+              "funded": { "profit_target_usd": null, "max_drawdown": { "amount_usd": 7500, "type": "trailing_threshold_with_safety_net" } }
+            },
+            {
+              "account_size_usd": 100000,
+              "subtype": "static",
+              "evaluation": {
+                "profit_target_usd": 2000,
+                "max_drawdown": { "amount_usd": 625, "type": "static", "trailing": false },
+                "daily_loss_limit_usd": null,
+                "min_trading_days": 7,
+                "max_trading_days": null
+              },
+              "funded": {
+                "profit_target_usd": null,
+                "max_drawdown": { "amount_usd": 625, "type": "static_then_profit_based_mae_rules", "details": "Legacy static has special MAE calculations; see Legacy PA compliance docs [VERIFY]." }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "firm_key": "topstep",
+      "firm_name": "Topstep",
+      "programs": [
+        {
+          "program_key": "topstep_journey",
+          "program_name": "Trading Combine -> Express Funded -> Live Funded",
+          "account_sizes": [
+            {
+              "account_size_usd": 50000,
+              "evaluation": {
+                "phase_name": "Trading Combine",
+                "profit_target_usd": 3000,
+                "max_drawdown": {
+                  "amount_usd": 2000,
+                  "type": "trailing_mll",
+                  "calculation": "based on account balance high at end of day; does not move down",
+                  "lock_behavior": "once MLL reaches initial starting balance it remains there"
+                },
+                "daily_loss_limit": {
+                  "standard_platforms_default_usd": -1000,
+                  "topstepx_default": "none (no DLL automatically added on TopstepX for new/reset Trading Combines)",
+                  "topstepx_personal_dll": "[VERIFY] (user-configurable via risk settings)"
+                },
+                "min_trading_days": 2,
+                "max_trading_days": "[VERIFY] (not stated as a fixed maximum; Combine is subscription-based)",
+                "consistency_rules": [
+                  { "rule": "consistency_target_50_percent", "details": "Best Day below 50% of total profits made; if not met, must earn additional profits." }
+                ],
+                "news_trading": { "allowed": true, "details": "Permitted during news/economic releases at trader's own risk." },
+                "weekend_holding": { "allowed": false, "details": "Must close positions daily before 3:10 PM CT; no swing trading/overnight/weekend holds." },
+                "special_rules": [
+                  "Trading day/session: 5:00 PM CT start; must be flat by 3:10 PM CT.",
+                  "Daily Loss Limit is an objective (auto-liquidation for the day) rather than an account-closing rule."
+                ]
+              },
+              "funded": {
+                "phase_name": "Express Funded Account (Sim Funded) + Live Funded Account (Live)",
+                "express_funded_standard": {
+                  "profit_target_usd": null,
+                  "max_drawdown": { "amount_usd": 2000, "type": "trailing_mll", "lock_behavior": "locks at $0 once it reaches $0 [per EFA rules page; verify exact behavior by account]" },
+                  "daily_loss_limit": {
+                    "topstepx_default": "none automatically; can enable your own via TopstepX risk settings",
+                    "other_platforms_default_usd": -1000
+                  },
+                  "consistency_rules": [],
+                  "news_trading": { "allowed": true, "details": "Allowed; caution advised." },
+                  "weekend_holding": { "allowed": false },
+                  "payout_rules": {
+                    "win_days_required": 5,
+                    "win_day_min_net_pnl_usd": 150,
+                    "profitability_since_last_payout_required": true,
+                    "payout_frequency": "weekly (once eligibility met)",
+                    "payout_cap_usd": 5000,
+                    "max_percent_of_balance_per_payout": 50,
+                    "profit_split": "90/10 (trader/firm) [verify legacy join-date edge cases]"
+                  },
+                  "scaling_plan": {
+                    "applies": true,
+                    "details": "Scaling Plan is evaluated daily; buying power and max position size move based on end-of-day P&L; exact tier thresholds shown in platform graphs [VERIFY]."
+                  }
+                },
+                "express_funded_consistency": {
+                  "profit_target_usd": null,
+                  "max_drawdown": { "amount_usd": 2000, "type": "trailing_mll" },
+                  "daily_loss_limit": {
+                    "topstepx_default": "none automatically; optional personal DLL",
+                    "other_platforms_default_usd": -1000
+                  },
+                  "consistency_rules": [
+                    { "rule": "consistency_40_percent_payout_window", "details": "Largest day must be <= 40% of total net profit in payout window." }
+                  ],
+                  "payout_rules": {
+                    "days_required": 3,
+                    "payout_cap_usd": 6000,
+                    "max_percent_of_balance_per_payout": 50,
+                    "profit_split": "90/10 (trader/firm) [verify legacy join-date edge cases]"
+                  },
+                  "scaling_plan": { "applies": true }
+                },
+                "live_funded": {
+                  "profit_target_usd": 3000,
+                  "max_drawdown": { "amount_usd": 0, "type": "account_balance_floor", "details": "Rule in program overview: do not allow balance to reach or go below $0." },
+                  "daily_loss_limit": {
+                    "default_usd": 2000,
+                    "if_tradable_balance_usd_lte": { "threshold": 10000, "daily_loss_limit_usd": 2000 }
+                  },
+                  "news_trading": { "allowed": true, "details": "Permitted; caution advised." },
+                  "weekend_holding": { "allowed": false, "details": "Same no-swing rule; must be flat daily before 3:10 PM CT." },
+                  "payout_rules": {
+                    "standard_payout": {
+                      "win_days_required": 5,
+                      "win_day_min_net_pnl_usd": 150,
+                      "max_percent_of_balance_per_payout": 50,
+                      "min_payout_usd": 125
+                    },
+                    "daily_payouts_unlock": {
+                      "winning_days_required": 30,
+                      "up_to_percent_of_balance": 100,
+                      "frequency": "daily (once unlocked)"
+                    },
+                    "profit_split": "90/10 for new traders joining on/after 2026-01-12 [VERIFY if earlier join date]"
+                  },
+                  "scaling_plan": {
+                    "type": "dynamic_live_risk_expansion",
+                    "details": "DLL and max contract size can expand/contract with profit tiers; requires 10 active trading days per tier; values vary by account size."
+                  },
+                  "special_rules": [
+                    "Live account starting balance uses a reserve/unlock structure (20% available immediately; reserve unlocks via profit targets)."
+                  ]
+                }
+              }
+            },
+            {
+              "account_size_usd": 100000,
+              "evaluation": {
+                "profit_target_usd": 6000,
+                "max_drawdown": { "amount_usd": 3000, "type": "trailing_mll" },
+                "daily_loss_limit": { "standard_platforms_default_usd": -2000, "topstepx_default": "none automatically" },
+                "min_trading_days": 2,
+                "consistency_rules": [{ "rule": "consistency_target_50_percent" }],
+                "news_trading": { "allowed": true },
+                "weekend_holding": { "allowed": false }
+              },
+              "funded": {
+                "express_funded_standard": { "daily_loss_limit": { "other_platforms_default_usd": -2000 }, "max_drawdown": { "amount_usd": 3000, "type": "trailing_mll" } },
+                "express_funded_consistency": { "max_drawdown": { "amount_usd": 3000, "type": "trailing_mll" } },
+                "live_funded": {
+                  "profit_target_usd": 6000,
+                  "daily_loss_limit": { "default_usd": 3000, "if_tradable_balance_usd_lte": { "threshold": 10000, "daily_loss_limit_usd": 2000 } }
+                }
+              }
+            },
+            {
+              "account_size_usd": 150000,
+              "evaluation": {
+                "profit_target_usd": 9000,
+                "max_drawdown": { "amount_usd": 4500, "type": "trailing_mll" },
+                "daily_loss_limit": { "standard_platforms_default_usd": -3000, "topstepx_default": "none automatically" },
+                "min_trading_days": 2,
+                "consistency_rules": [{ "rule": "consistency_target_50_percent" }],
+                "news_trading": { "allowed": true },
+                "weekend_holding": { "allowed": false }
+              },
+              "funded": {
+                "express_funded_standard": { "daily_loss_limit": { "other_platforms_default_usd": -3000 }, "max_drawdown": { "amount_usd": 4500, "type": "trailing_mll" } },
+                "express_funded_consistency": { "max_drawdown": { "amount_usd": 4500, "type": "trailing_mll" } },
+                "live_funded": {
+                  "profit_target_usd": 9000,
+                  "daily_loss_limit": { "default_usd": 4500, "if_tradable_balance_usd_lte": { "threshold": 10000, "daily_loss_limit_usd": 2000 } }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "firm_key": "tradeify",
+      "firm_name": "Tradeify",
+      "programs": [
+        {
+          "program_key": "select",
+          "program_name": "SELECT Evaluation -> SELECT Funded (Flex or Daily payout policy choice)",
+          "account_sizes": [
+            {
+              "account_size_usd": 50000,
+              "evaluation": {
+                "profit_target_usd": 2500,
+                "max_drawdown": { "amount_usd": 2000, "type": "eod_trailing_drawdown" },
+                "daily_loss_limit_usd": null,
+                "min_trading_days": 3,
+                "max_trading_days": null,
+                "consistency_rules": [{ "rule": "40_percent_consistency_eval_only", "details": "No single day can represent more than 40% of total profit." }],
+                "news_trading": { "allowed": "[VERIFY]" },
+                "weekend_holding": { "allowed": false, "details": "All positions must be closed before market close each day." },
+                "special_rules": ["Evaluation has no daily loss limit; only EOD trailing drawdown risk limit."]
+              },
+              "funded": {
+                "phase_variants": {
+                  "select_flex_5_day": {
+                    "profit_target_usd": null,
+                    "max_drawdown": { "amount_usd": 2000, "type": "eod_trailing_drawdown" },
+                    "daily_loss_limit_usd": null,
+                    "consistency_rules": ["40% evaluation consistency is removed once funded"],
+                    "payout_rules": { "policy": "Flex (5-Day)", "details": "[VERIFY] Full Flex payout caps and exact requirements not fully captured in extracted snippet." }
+                  },
+                  "select_daily": {
+                    "profit_target_usd": null,
+                    "max_drawdown": { "amount_usd": 2000, "type": "eod_trailing_drawdown" },
+                    "daily_loss_limit_usd": 1000,
+                    "consistency_rules": ["No evaluation consistency; daily policy uses a 'Daily Continuity Rule' for payout caps"],
+                    "payout_rules": {
+                      "buffer_usd": 2100,
+                      "payout_frequency": "daily eligibility (after dashboard updates)",
+                      "profit_split_percent_to_trader": 90,
+                      "min_payout_usd": 250,
+                      "payout_cap_rule": "May request up to 2x profit earned between payout requests, capped per account size",
+                      "payout_cap_usd": 1000,
+                      "profit_must_be_positive_since_last_payout": true
+                    }
+                  }
+                },
+                "weekend_holding": { "allowed": false }
+              }
+            },
+            {
+              "account_size_usd": 100000,
+              "evaluation": {
+                "profit_target_usd": 6000,
+                "max_drawdown": { "amount_usd": 3000, "type": "eod_trailing_drawdown" },
+                "daily_loss_limit_usd": null,
+                "min_trading_days": 3,
+                "max_trading_days": null,
+                "consistency_rules": [{ "rule": "40_percent_consistency_eval_only" }],
+                "weekend_holding": { "allowed": false }
+              },
+              "funded": {
+                "phase_variants": {
+                  "select_flex_5_day": { "daily_loss_limit_usd": null, "payout_rules": { "details": "[VERIFY]" } },
+                  "select_daily": {
+                    "daily_loss_limit_usd": 1250,
+                    "payout_rules": { "buffer_usd": 2600, "payout_cap_usd": 1500, "min_payout_usd": 250, "profit_split_percent_to_trader": 90 }
+                  }
+                }
+              }
+            },
+            {
+              "account_size_usd": 150000,
+              "evaluation": {
+                "profit_target_usd": 9000,
+                "max_drawdown": { "amount_usd": 4500, "type": "eod_trailing_drawdown" },
+                "daily_loss_limit_usd": null,
+                "min_trading_days": 3,
+                "max_trading_days": null,
+                "consistency_rules": [{ "rule": "40_percent_consistency_eval_only" }],
+                "weekend_holding": { "allowed": false }
+              },
+              "funded": {
+                "phase_variants": {
+                  "select_flex_5_day": { "details": "[VERIFY]" },
+                  "select_daily": { "daily_loss_limit_usd": 1750, "payout_rules": { "buffer_usd": 3600, "payout_cap_usd": 2500, "profit_split_percent_to_trader": 90, "min_payout_usd": 250 } }
+                }
+              }
+            }
+          ],
+          "universal_rules": {
+            "position_holding": "No overnight; close positions by 4:59 PM ET (12:59 PM ET on holiday early closes).",
+            "drawdown_type": "All accounts use End-of-Day (EOD) trailing drawdown; hard breach fails account."
+          }
+        },
+        {
+          "program_key": "growth",
+          "program_name": "Growth Evaluation -> Growth Funded (fixed payout policy)",
+          "account_sizes": [
+            {
+              "account_size_usd": 50000,
+              "evaluation": {
+                "profit_target_usd": 3000,
+                "max_drawdown": { "amount_usd": 2000, "type": "eod_trailing_drawdown" },
+                "daily_loss_limit_usd": 1250,
+                "daily_loss_limit_breach_type": "soft (stops trading for day; does not fail account)",
+                "min_trading_days": 0,
+                "max_trading_days": null,
+                "consistency_rules": [],
+                "weekend_holding": { "allowed": false }
+              },
+              "funded": {
+                "max_drawdown": { "amount_usd": 2000, "type": "eod_trailing_drawdown" },
+                "daily_loss_limit_usd": 1250,
+                "consistency_rules": [{ "rule": "35_percent_consistency_for_payouts", "details": "Applies to payout eligibility." }],
+                "payout_rules": {
+                  "min_profitable_days_per_payout": 5,
+                  "min_profit_per_day_usd": 150,
+                  "profit_split": "[VERIFY]",
+                  "payout_frequency": "[VERIFY]",
+                  "payout_profit_goals_between_cycles": "[VERIFY]"
+                }
+              }
+            },
+            {
+              "account_size_usd": 100000,
+              "evaluation": {
+                "profit_target_usd": 6000,
+                "max_drawdown": { "amount_usd": 3500, "type": "eod_trailing_drawdown" },
+                "daily_loss_limit_usd": 2500,
+                "min_trading_days": 0,
+                "max_trading_days": null
+              },
+              "funded": {
+                "daily_loss_limit_usd": 2500,
+                "payout_rules": { "min_profitable_days_per_payout": 5, "min_profit_per_day_usd": 200, "profit_split": "[VERIFY]" }
+              }
+            },
+            {
+              "account_size_usd": 150000,
+              "evaluation": {
+                "profit_target_usd": 9000,
+                "max_drawdown": { "amount_usd": 5000, "type": "eod_trailing_drawdown" },
+                "daily_loss_limit_usd": 3750,
+                "min_trading_days": 0,
+                "max_trading_days": null
+              },
+              "funded": {
+                "daily_loss_limit_usd": 3750,
+                "payout_rules": { "min_profitable_days_per_payout": 5, "min_profit_per_day_usd": 250, "profit_split": "[VERIFY]" }
+              }
+            }
+          ]
+        },
+        {
+          "program_key": "lightning_straight_to_funded",
+          "program_name": "Lightning Funded (Straight-to-Sim-Funded)",
+          "account_sizes": [
+            {
+              "account_size_usd": 25000,
+              "evaluation": { "exists": false },
+              "funded": {
+                "profit_target_usd": null,
+                "max_drawdown": { "amount_usd": 1000, "type": "eod_trailing_drawdown" },
+                "daily_loss_limit_usd": null,
+                "max_position_size": "1 contract / 10 micros",
+                "payout_rules": {
+                  "min_days": 0,
+                  "consistency_rule": "20% for payout 1, 25% payout 2, 30% thereafter (for newer accounts) [VERIFY legacy timing] ",
+                  "profit_split": "[VERIFY]"
+                }
+              }
+            },
+            {
+              "account_size_usd": 50000,
+              "evaluation": { "exists": false },
+              "funded": {
+                "max_drawdown": { "amount_usd": 2000, "type": "eod_trailing_drawdown" },
+                "daily_loss_limit_usd": 1250,
+                "max_position_size": "4 contracts / 40 micros",
+                "payout_rules": { "min_days": 0, "consistency_rule": "tiered (20%/25%/30%)", "profit_split": "[VERIFY]" }
+              }
+            },
+            {
+              "account_size_usd": 100000,
+              "evaluation": { "exists": false },
+              "funded": {
+                "max_drawdown": { "amount_usd": 4000, "type": "eod_trailing_drawdown" },
+                "daily_loss_limit_usd": 2500,
+                "max_position_size": "8 contracts / 80 micros",
+                "payout_rules": { "min_days": 0, "consistency_rule": "tiered (20%/25%/30%)", "profit_split": "[VERIFY]" }
+              }
+            },
+            {
+              "account_size_usd": 150000,
+              "evaluation": { "exists": false },
+              "funded": {
+                "max_drawdown": { "amount_usd": 6000, "type": "eod_trailing_drawdown" },
+                "daily_loss_limit_usd": 3750,
+                "max_position_size": "12 contracts / 120 micros",
+                "payout_rules": { "min_days": 0, "consistency_rule": "tiered (20%/25%/30%)", "profit_split": "[VERIFY]" }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "firm_key": "lucid_trading",
+      "firm_name": "Lucid Trading",
+      "programs": [
+        {
+          "program_key": "lucidblack",
+          "program_name": "LucidBlack (Legacy) - Evaluation -> Funded",
+          "account_sizes": [
+            {
+              "account_size_usd": 25000,
+              "evaluation": {
+                "profit_target_usd": 1250,
+                "max_drawdown": { "amount_usd": 1000, "type": "max_loss_limit", "drawdown_type": "EOD [VERIFY]" },
+                "daily_loss_limit_usd": null,
+                "min_trading_days": 2,
+                "max_trading_days": null,
+                "consistency_rules": [{ "rule": "60_percent_consistency", "details": "Evaluation consistency %." }],
+                "news_trading": { "allowed": "[VERIFY]" },
+                "weekend_holding": { "allowed": "[VERIFY]" },
+                "special_rules": ["No DLL on LucidBlack evaluation accounts.", "One-time fee; no monthly rebilling; take as long as needed."]
+              },
+              "funded": {
+                "profit_target_usd": null,
+                "max_drawdown": "[VERIFY] (LucidBlack funded drawdown parameters not visible in captured payout objectives)",
+                "daily_loss_limit_usd": "[VERIFY]",
+                "consistency_rules": [{ "rule": "40_percent_consistency_per_payout_cycle" }],
+                "payout_rules": {
+                  "profit_split_percent_to_trader": 90,
+                  "min_payout_usd": 500,
+                  "profit_goal_usd": 1500,
+                  "bonus_profit_goal_usd": 2500,
+                  "standard_payout_max_usd": 750,
+                  "bonus_payout_max_usd": 750,
+                  "buffer_required": false
+                }
+              }
+            },
+            {
+              "account_size_usd": 50000,
+              "evaluation": { "profit_target_usd": 3000, "max_drawdown": { "amount_usd": 2000, "type": "max_loss_limit" }, "daily_loss_limit_usd": null, "min_trading_days": 2, "consistency_rules": [{ "rule": "60_percent_consistency" }] },
+              "funded": {
+                "payout_rules": {
+                  "profit_split_percent_to_trader": 90,
+                  "min_payout_usd": 500,
+                  "profit_goal_usd": 3000,
+                  "bonus_profit_goal_usd": 5000,
+                  "standard_payout_max_usd": 1500,
+                  "bonus_payout_max_usd": 1500
+                }
+              }
+            },
+            {
+              "account_size_usd": 100000,
+              "evaluation": { "profit_target_usd": 6000, "max_drawdown": { "amount_usd": 3000, "type": "max_loss_limit" }, "daily_loss_limit_usd": null, "min_trading_days": 2, "consistency_rules": [{ "rule": "60_percent_consistency" }] },
+              "funded": {
+                "payout_rules": {
+                  "profit_split_percent_to_trader": 90,
+                  "min_payout_usd": 500,
+                  "profit_goal_usd": 4500,
+                  "bonus_profit_goal_usd": 7000,
+                  "standard_payout_max_usd": 2000,
+                  "bonus_payout_max_usd": "[VERIFY] (bonus table truncated in captured snippet)"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "program_key": "lucidflex",
+          "program_name": "LucidFlex - Evaluation -> Funded",
+          "account_sizes": [
+            {
+              "account_size_usd": 25000,
+              "evaluation": {
+                "profit_target_usd": "[VERIFY]",
+                "max_drawdown": "[VERIFY]",
+                "daily_loss_limit_usd": "[VERIFY]",
+                "consistency_rules": [],
+                "notes": "LucidFlex payout article confirms this funded size exists; evaluation parameter page not captured."
+              },
+              "funded": {
+                "profit_split_percent_to_trader": 90,
+                "payout_rules": {
+                  "min_profit_days": 5,
+                  "min_daily_profit_usd": 100,
+                  "min_payout_usd": 500,
+                  "max_percent_of_balance_per_payout": 50,
+                  "payout_cap_usd": 1000,
+                  "max_payouts_per_account": 6,
+                  "buffer_required": false,
+                  "payout_window": "none (request any day when eligible)"
+                }
+              }
+            },
+            {
+              "account_size_usd": 50000,
+              "evaluation": {
+                "profit_target_usd": 3000,
+                "max_drawdown": { "amount_usd": 2000, "type": "max_loss_limit", "drawdown_type": "EOD" },
+                "daily_loss_limit_usd": 1200,
+                "consistency_rules": [],
+                "max_position_size": "4 minis / 40 micros"
+              },
+              "funded": {
+                "profit_split_percent_to_trader": 90,
+                "payout_rules": { "min_profit_days": 5, "min_daily_profit_usd": 150, "min_payout_usd": 500, "payout_cap_usd": 2000, "max_payouts_per_account": 6, "buffer_required": false }
+              }
+            },
+            {
+              "account_size_usd": 100000,
+              "evaluation": {
+                "profit_target_usd": 6000,
+                "max_drawdown": { "amount_usd": 3000, "type": "max_loss_limit", "drawdown_type": "EOD" },
+                "daily_loss_limit_usd": 1800,
+                "consistency_rules": [],
+                "max_position_size": "6 minis / 60 micros"
+              },
+              "funded": {
+                "profit_split_percent_to_trader": 90,
+                "payout_rules": { "min_profit_days": 5, "min_daily_profit_usd": 200, "min_payout_usd": 500, "payout_cap_usd": 2500, "max_payouts_per_account": 6, "buffer_required": false }
+              }
+            },
+            {
+              "account_size_usd": 150000,
+              "evaluation": { "profit_target_usd": "[VERIFY]", "max_drawdown": "[VERIFY]", "daily_loss_limit_usd": "[VERIFY]" },
+              "funded": {
+                "profit_split_percent_to_trader": 90,
+                "payout_rules": { "min_profit_days": 5, "min_daily_profit_usd": 250, "min_payout_usd": 500, "payout_cap_usd": 3000, "max_payouts_per_account": 6, "buffer_required": false }
+              }
+            }
+          ]
+        },
+        {
+          "program_key": "lucidpro",
+          "program_name": "LucidPro - Evaluation -> Funded",
+          "account_sizes": [
+            {
+              "account_size_usd": 25000,
+              "evaluation": { "profit_target_usd": "[VERIFY]", "max_drawdown": { "amount_usd": 1000, "type": "inferred_from_buffer_definition" }, "daily_loss_limit_usd": "[VERIFY]" },
+              "funded": {
+                "profit_split_percent_to_trader": 90,
+                "payout_rules": {
+                  "min_profit_goal_usd": 250,
+                  "consistency_rule": "40% (largest day <=40% of total profit per payout cycle)",
+                  "buffer_balance_usd": 26100,
+                  "min_payout_usd": 500,
+                  "payout_max_usd": { "payout_1": 1000, "payout_2_plus": 1500 }
+                }
+              }
+            },
+            {
+              "account_size_usd": 50000,
+              "evaluation": { "profit_target_usd": "[VERIFY]", "max_drawdown": { "amount_usd": 2000, "type": "inferred_from_buffer_definition" }, "daily_loss_limit_usd": "[VERIFY]" },
+              "funded": {
+                "profit_split_percent_to_trader": 90,
+                "payout_rules": { "min_profit_goal_usd": 500, "buffer_balance_usd": 52100, "min_payout_usd": 500, "payout_max_usd": { "payout_1": 2000, "payout_2_plus": 2500 } }
+              }
+            },
+            {
+              "account_size_usd": 100000,
+              "evaluation": { "profit_target_usd": 6000, "max_drawdown": { "amount_usd": 3000, "type": "max_loss_limit" }, "daily_loss_limit_usd": 1800, "max_position_size": "6 minis / 60 micros" },
+              "funded": {
+                "profit_split_percent_to_trader": 90,
+                "payout_rules": { "min_profit_goal_usd": 750, "buffer_balance_usd": 103100, "min_payout_usd": 500, "payout_max_usd": { "payout_1": 2500, "payout_2_plus": 3000 } }
+              }
+            },
+            {
+              "account_size_usd": 150000,
+              "evaluation": { "profit_target_usd": 9000, "max_drawdown": { "amount_usd": 4500, "type": "max_loss_limit" }, "daily_loss_limit_usd": 2700, "max_position_size": "10 minis / 100 micros" },
+              "funded": {
+                "profit_split_percent_to_trader": 90,
+                "payout_rules": { "min_profit_goal_usd": 1000, "buffer_balance_usd": 154600, "min_payout_usd": 500, "payout_max_usd": { "payout_1": 3000, "payout_2_plus": 3500 } }
+              }
+            }
+          ]
+        },
+        {
+          "program_key": "luciddirect",
+          "program_name": "LucidDirect - Entry Requirements + Funded Payout Objectives",
+          "account_sizes": [
+            {
+              "account_size_usd": 25000,
+              "evaluation": { "profit_target_usd": 1500, "max_drawdown": "[VERIFY]", "daily_loss_limit_usd": "[VERIFY]", "min_trading_days": 10, "consistency_rules": [{ "rule": "20_percent_consistency", "details": "Shown in payout objectives." }] },
+              "funded": {
+                "profit_split_percent_to_trader": 90,
+                "consistency_rules": [{ "rule": "20_percent_consistency_per_payout_cycle" }],
+                "payout_rules": {
+                  "profit_goal_usd": { "payout_1": 1500, "payout_2_plus": 1250 },
+                  "min_payout_usd": 500,
+                  "payout_max_usd": { "payouts_1_to_3": 1000, "payouts_4_to_6": 1000 }
+                }
+              }
+            },
+            {
+              "account_size_usd": 50000,
+              "evaluation": { "profit_target_usd": 3000, "max_drawdown": { "amount_usd": 2000, "type": "max_loss_limit", "drawdown_type": "EOD" }, "daily_loss_limit_usd": 1200, "min_trading_days": 10, "consistency_rules": [{ "rule": "20_percent_consistency" }] },
+              "funded": {
+                "profit_split_percent_to_trader": 90,
+                "payout_rules": { "profit_goal_usd": { "payout_1": 3000, "payout_2_plus": 2500 }, "min_payout_usd": 500, "payout_max_usd": { "payouts_1_to_3": 2000, "payouts_4_to_6": 2500 } }
+              }
+            },
+            {
+              "account_size_usd": 100000,
+              "evaluation": { "profit_target_usd": "[VERIFY]", "max_drawdown": "[VERIFY]", "daily_loss_limit_usd": "[VERIFY]", "min_trading_days": 10 },
+              "funded": {
+                "profit_split_percent_to_trader": 90,
+                "payout_rules": { "profit_goal_usd": { "payout_1": 6000, "payout_2_plus": 3500 }, "min_payout_usd": 500, "payout_max_usd": { "payouts_1_to_3": 2500, "payouts_4_to_6": 3000 } }
+              }
+            },
+            {
+              "account_size_usd": 150000,
+              "evaluation": { "profit_target_usd": 9000, "max_drawdown": { "amount_usd": 6000, "type": "max_loss_limit", "drawdown_type": "EOD" }, "daily_loss_limit_usd": 3600, "min_trading_days": 10, "consistency_rules": [{ "rule": "20_percent_consistency" }] },
+              "funded": {
+                "profit_split_percent_to_trader": 90,
+                "payout_rules": { "profit_goal_usd": { "payout_1": 9000, "payout_2_plus": 4500 }, "min_payout_usd": 500, "payout_max_usd": { "payouts_1_to_3": 3000, "payouts_4_to_6": 3500 } }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "firm_key": "take_profit_trader",
+      "firm_name": "Take Profit Trader",
+      "programs": [
+        {
+          "program_key": "one_step_test_to_pro_to_pro_plus",
+          "program_name": "Test -> PRO (Sim) -> PRO+ (Live)",
+          "account_sizes": [
+            { "account_size_usd": 25000, "evaluation": { "profit_target_usd": "[VERIFY]", "max_drawdown": "[VERIFY]", "daily_loss_limit_usd": "removed [VERIFY]", "min_trading_days": 5, "max_trading_days": "[VERIFY]", "consistency_rules": "[VERIFY]", "news_trading": { "allowed": true, "details": "Allowed in Test and PRO per rules page." }, "weekend_holding": { "allowed": false, "details": "Must be out before market closes (5 PM EST)." } }, "funded": { "pro": { "profit_split_percent_to_trader": 80, "payout_timing": "day one withdrawals (above buffer) [VERIFY buffer amounts]" }, "pro_plus": { "profit_split_percent_to_trader": 90, "news_trading": { "allowed": false, "details": "Cannot trade major news events in PRO+ per rules page." } } } },
+            { "account_size_usd": 50000, "evaluation": { "profit_target_usd": "[VERIFY]", "max_drawdown": "[VERIFY]", "daily_loss_limit_usd": "removed [VERIFY]", "min_trading_days": 5, "max_trading_days": "[VERIFY]" }, "funded": { "pro": { "profit_split_percent_to_trader": 80 }, "pro_plus": { "profit_split_percent_to_trader": 90 } } },
+            { "account_size_usd": 75000, "evaluation": { "profit_target_usd": "[VERIFY]", "max_drawdown": "[VERIFY]", "daily_loss_limit_usd": "removed [VERIFY]", "min_trading_days": 5 }, "funded": { "pro": { "profit_split_percent_to_trader": 80 }, "pro_plus": { "profit_split_percent_to_trader": 90 } } },
+            { "account_size_usd": 100000, "evaluation": { "profit_target_usd": "[VERIFY]", "max_drawdown": "[VERIFY]", "daily_loss_limit_usd": "removed [VERIFY]", "min_trading_days": 5 }, "funded": { "pro": { "profit_split_percent_to_trader": 80 }, "pro_plus": { "profit_split_percent_to_trader": 90 } } },
+            { "account_size_usd": 150000, "evaluation": { "profit_target_usd": "[VERIFY]", "max_drawdown": "[VERIFY]", "daily_loss_limit_usd": "removed [VERIFY]", "min_trading_days": 5 }, "funded": { "pro": { "profit_split_percent_to_trader": 80 }, "pro_plus": { "profit_split_percent_to_trader": 90 } } }
+          ],
+          "global_rules": {
+            "bots": "No trading bots (stated on site snapshot).",
+            "position_holding": "Must be out before market close; no overnight/weekend holds.",
+            "notes": "The site indicates 'parameters table' exists but was not fully extractable in the captured HTML; numeric per-size targets are marked [VERIFY]."
+          }
+        }
+      ]
+    },
+    {
+      "firm_key": "alpha_futures",
+      "firm_name": "Alpha Futures",
+      "programs": [
+        {
+          "program_key": "standard_advanced_zero",
+          "program_name": "Standard / Advanced / Zero (Evaluation -> Qualified)",
+          "account_sizes": [
+            {
+              "account_size_usd": 50000,
+              "evaluation": {
+                "profit_target_usd": 3000,
+                "max_drawdown": { "amount_usd": 2000, "type": "eod_style_mll", "details": "Standard accounts described as 4% EOD-style MLL across sizes [VERIFY]." },
+                "daily_loss_limit_usd": "[VERIFY]",
+                "min_trading_days": 2,
+                "max_trading_days": "[VERIFY]",
+                "consistency_rules": [{ "rule": "50_percent_consistency_eval", "details": "Standard/Advanced evaluations have 50% rule." }],
+                "news_trading": { "allowed": "[VERIFY]" },
+                "weekend_holding": { "allowed": "[VERIFY]" }
+              },
+              "funded": {
+                "phase_name": "Qualified (Standard/Zero) / Advanced/Zero payout policies",
+                "profit_target_usd": null,
+                "max_drawdown": "[VERIFY]",
+                "daily_loss_limit_usd": "[VERIFY]",
+                "consistency_rules": [{ "rule": "40_percent_consistency_for_payouts_standard_zero", "details": "Payout eligibility requires 40% consistency (does not breach account but blocks payout eligibility until satisfied)." }],
+                "payout_rules": {
+                  "standard_accounts": { "frequency": "every 14 days from first trade placed (payout date)", "min_payout_usd": 200, "max_payout_usd": 15000, "profit_split": "[VERIFY]" },
+                  "advanced_accounts": { "frequency": "weekly after 5 winning trading days of $200+ profit", "min_payout_usd": 1000, "max_payout_usd": 15000, "max_percent_profit_per_request": 50, "after_30_winning_days_max_percent": 100, "profit_split": 90 },
+                  "zero_accounts": { "frequency": "weekly after 5 winning trading days of $200+ profit", "min_payout_usd": 200, "max_payout_usd": 1500, "profit_split": 90 }
+                }
+              }
+            },
+            {
+              "account_size_usd": 100000,
+              "evaluation": {
+                "profit_target_usd": 6000,
+                "max_drawdown": { "amount_usd": 4000, "type": "eod_style_mll", "details": "Derived from 4% statement [VERIFY]." },
+                "min_trading_days": 2,
+                "consistency_rules": [{ "rule": "50_percent_consistency_eval" }]
+              },
+              "funded": {
+                "payout_rules": {
+                  "advanced_accounts": { "profit_split": 90, "max_payout_usd": 15000 },
+                  "zero_accounts": { "profit_split": 90, "max_payout_usd": 3000 }
+                }
+              }
+            },
+            {
+              "account_size_usd": 150000,
+              "evaluation": {
+                "profit_target_usd": 9000,
+                "max_drawdown": { "amount_usd": 6000, "type": "eod_style_mll", "details": "Derived from 4% statement [VERIFY]." },
+                "min_trading_days": 2,
+                "consistency_rules": [{ "rule": "50_percent_consistency_eval" }]
+              },
+              "funded": { "payout_rules": { "profit_split": "[VERIFY]" } }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "firm_key": "myfunded_futures",
+      "firm_name": "MyFunded Futures",
+      "programs": [
+        {
+          "program_key": "rapid_50k",
+          "program_name": "Rapid Plan (captured: 50K) - Evaluation -> Sim Funded",
+          "account_sizes": [
+            {
+              "account_size_usd": 50000,
+              "evaluation": {
+                "profit_target_usd": 3000,
+                "max_drawdown": { "amount_usd": 2000, "type": "eod_max_loss_limit", "drawdown_type": "EOD (evaluation table) + intraday trailing described separately" },
+                "daily_loss_limit_usd": null,
+                "min_trading_days": 2,
+                "max_trading_days": "[VERIFY]",
+                "consistency_rules": [{ "rule": "50_percent_eval_only", "details": "Consistency 50% in evaluation only." }],
+                "news_trading": { "allowed": true, "details": "T1 news trading: Yes (evaluation)." },
+                "weekend_holding": { "allowed": "[VERIFY]" },
+                "special_rules": ["Max contracts: 5 mini / 50 micro (evaluation)."]
+              },
+              "funded": {
+                "phase_name": "Sim Funded",
+                "profit_target_usd": null,
+                "max_drawdown": {
+                  "amount_usd": 2000,
+                  "type": "intraday_trailing_from_hwm",
+                  "special": "Locks at $100 once trailing max loss reaches $100 (must keep at least $100)."
+                },
+                "daily_loss_limit_usd": null,
+                "consistency_rules": [],
+                "news_trading": { "allowed": false, "details": "No T1 news trading allowed on this Sim Funded account (Rapid 50k doc)." },
+                "payout_rules": "[VERIFY] (not captured in Rapid 50k article snippet)",
+                "scaling_plan": { "details": "[VERIFY] (position limits apply once funded; evaluation has no scaling restriction per Scale plan blog for that plan type)." }
+              }
+            }
+          ]
+        },
+        {
+          "program_key": "scale_plan",
+          "program_name": "Scale Plan (blog snapshot) - Evaluation framework + Sim Funded tiers",
+          "account_sizes": [
+            {
+              "account_size_usd": 50000,
+              "evaluation": { "profit_target_usd": 3000, "max_drawdown": { "amount_usd": 2000, "type": "eod_drawdown" }, "daily_loss_limit_usd": null, "news_trading": { "allowed": true }, "consistency_rules": "[VERIFY]" },
+              "funded": {
+                "profit_split_percent_to_trader": 80,
+                "max_drawdown": { "amount_usd": 2000, "type": "eod_max_loss" },
+                "daily_loss_limit_usd": null,
+                "payout_rules": { "tiered_caps": { "payout_1_usd": 1500, "payout_2_usd": 1750, "payout_3_usd": 2000, "payout_4_usd": 2500, "payout_5_usd": 3500 } },
+                "scaling_plan": { "max_contracts": "Up to 3 minis / 15 micros [VERIFY full table truncated]" }
+              }
+            },
+            {
+              "account_size_usd": 100000,
+              "evaluation": { "profit_target_usd": "[VERIFY]", "max_drawdown": { "amount_usd": 3000, "type": "eod_drawdown" }, "daily_loss_limit_usd": null, "news_trading": { "allowed": true } },
+              "funded": {
+                "profit_split_percent_to_trader": 80,
+                "max_drawdown": { "amount_usd": 3000, "type": "eod_max_loss" },
+                "daily_loss_limit_usd": null,
+                "payout_rules": { "tiered_caps": { "payout_1_usd": 3000, "payout_2_usd": 3500, "payout_3_usd": 4000, "payout_4_usd": 4500, "payout_5_usd": 5000 } }
+              }
+            },
+            {
+              "account_size_usd": 150000,
+              "evaluation": { "profit_target_usd": "[VERIFY]", "max_drawdown": { "amount_usd": 4500, "type": "eod_drawdown" }, "daily_loss_limit_usd": null, "news_trading": { "allowed": true } },
+              "funded": {
+                "profit_split_percent_to_trader": 80,
+                "max_drawdown": { "amount_usd": 4500, "type": "eod_max_loss" },
+                "daily_loss_limit_usd": null,
+                "payout_rules": { "tiered_caps": { "payout_1_usd": 4500, "payout_2_usd": 5250, "payout_3_usd": 6000, "payout_4_usd": 6750, "payout_5_usd": 7500 } }
+              }
+            }
+          ]
+        },
+        {
+          "program_key": "flex_plan",
+          "program_name": "Flex Plan (help snapshot) - Payout policy",
+          "account_sizes": [
+            {
+              "account_size_usd": "[VERIFY]",
+              "funded": {
+                "profit_split_percent_to_trader": 80,
+                "payout_rules": {
+                  "qualify_after": { "winning_days_required": 5, "min_net_pnl_per_day_usd": 150, "net_profit_required_between_payouts_usd": 500 },
+                  "withdrawal_limit": { "min_payout_usd": 250, "max_percent_of_profits": 50, "max_payout_usd": 5000 },
+                  "max_loss_limit_after_first_payout": { "amount_usd": 100, "type": "static" }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

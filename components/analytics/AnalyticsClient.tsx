@@ -3,16 +3,17 @@
 
 // components/analytics/AnalyticsClient.tsx
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useTheme } from 'next-themes'
 import {
   BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer,
-  ReferenceLine, Cell, ScatterChart, Scatter,
+  ReferenceLine, Cell, ScatterChart, Scatter, LineChart, Line, AreaChart, Area,
 } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Switch } from '@/components/ui/switch'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { TradingCalendar } from './TradingCalendar'
 import { calcStats, formatCurrency, formatDate, getTradeTotalPnl } from '@/lib/utils'
 import { cn } from '@/lib/utils'
@@ -21,6 +22,22 @@ import { consolidateTradesAsTrades } from '@/lib/consolidateTrades'
 import { useJournalConsolidatePartials } from '@/lib/useJournalConsolidatePartials'
 
 interface Props { trades: Trade[] }
+type RangeKey = 'all' | '7d' | '30d' | '90d' | 'ytd'
+type SessionName = 'Asia' | 'London' | 'New York'
+
+const RANGE_LABELS: Record<RangeKey, string> = {
+  all: 'All time',
+  '7d': 'Last 7 days',
+  '30d': 'Last 30 days',
+  '90d': 'Last 90 days',
+  ytd: 'Year to date',
+}
+
+function getSessionByHour(hour: number): SessionName {
+  if (hour >= 21 || hour < 7) return 'Asia'
+  if (hour < 13) return 'London'
+  return 'New York'
+}
 
 function ChartTooltip({ active, payload, label, formatter }: any) {
   if (!active || !payload?.length) return null
@@ -39,31 +56,69 @@ function ChartTooltip({ active, payload, label, formatter }: any) {
 export function AnalyticsClient({ trades }: Props) {
   const { consolidatePartials, updateConsolidatePartials } = useJournalConsolidatePartials()
   const { theme } = useTheme()
+  const [range, setRange] = useState<RangeKey>('30d')
   const isDark = theme === 'dark'
   const gridColor = isDark ? '#1e293b' : '#f1f5f9'
   const axisColor = '#64748b'
 
-  const displayTrades = useMemo(() => {
+  const consolidatedTrades = useMemo(() => {
     if (!consolidatePartials) return trades
     return consolidateTradesAsTrades(trades)
   }, [trades, consolidatePartials])
 
+  const rangeStart = useMemo(() => {
+    const now = new Date()
+    if (range === 'all') return null
+    if (range === 'ytd') return new Date(now.getFullYear(), 0, 1)
+    const days = range === '7d' ? 7 : range === '30d' ? 30 : 90
+    const start = new Date(now)
+    start.setDate(start.getDate() - days)
+    return start
+  }, [range])
+
+  const displayTrades = useMemo(() => {
+    if (!rangeStart) return consolidatedTrades
+    return consolidatedTrades.filter(t => new Date(t.exitTime) >= rangeStart)
+  }, [consolidatedTrades, rangeStart])
+
   const stats = useMemo(() => calcStats(displayTrades as any), [displayTrades])
+
+  const equityCurve = useMemo(() => {
+    const sorted = [...displayTrades].sort((a, b) => new Date(a.exitTime).getTime() - new Date(b.exitTime).getTime())
+    let running = 0
+    let peak = 0
+    return sorted.map(t => {
+      running += getTradeTotalPnl(t)
+      peak = Math.max(peak, running)
+      return {
+        date: formatDate(t.exitTime),
+        cumPnl: Number(running.toFixed(2)),
+        drawdown: Number((peak - running).toFixed(2)),
+      }
+    })
+  }, [displayTrades])
 
   const dailyPnl = useMemo(() => {
     const map: Record<string, number> = {}
     displayTrades.forEach(t => {
-      const day = formatDate(t.exitTime)
+      const day = new Date(t.exitTime).toISOString().slice(0, 10)
       map[day] = (map[day] ?? 0) + getTradeTotalPnl(t)
     })
     let cum = 0
     return Object.entries(map)
-      .sort(([a], [b]) => new Date(a).getTime() - new Date(b).getTime())
+      .sort(([a], [b]) => a.localeCompare(b))
       .map(([date, pnl]) => {
         cum += pnl
-        return { date, dayPnl: Number(pnl.toFixed(2)), cumPnl: Number(cum.toFixed(2)) }
+        return { dateLabel: formatDate(date), dayPnl: Number(pnl.toFixed(2)), cumPnl: Number(cum.toFixed(2)) }
       })
   }, [displayTrades])
+
+  const consistency = useMemo(() => {
+    const activeDays = dailyPnl.length
+    const profitableDays = dailyPnl.filter(d => d.dayPnl > 0).length
+    const score = activeDays ? Math.round((profitableDays / activeDays) * 100) : 0
+    return { activeDays, profitableDays, score, avgDailyPnl: activeDays ? stats.netPnl / activeDays : 0 }
+  }, [dailyPnl, stats.netPnl])
 
   const distribution = useMemo(() => {
     if (!displayTrades.length) return []
@@ -119,6 +174,68 @@ export function AnalyticsClient({ trades }: Props) {
     })).sort((a, b) => b.pnl - a.pnl)
   }, [displayTrades])
 
+  const bySession = useMemo(() => {
+    const sessions: Record<SessionName, { pnl: number; count: number; wins: number }> = {
+      Asia: { pnl: 0, count: 0, wins: 0 },
+      London: { pnl: 0, count: 0, wins: 0 },
+      'New York': { pnl: 0, count: 0, wins: 0 },
+    }
+
+    displayTrades.forEach(t => {
+      const entryHour = new Date(t.entryTime).getHours()
+      const session = getSessionByHour(entryHour)
+      const pnl = getTradeTotalPnl(t)
+      sessions[session].pnl += pnl
+      sessions[session].count++
+      if (pnl > 0) sessions[session].wins++
+    })
+
+    return (Object.keys(sessions) as SessionName[]).map((session) => {
+      const v = sessions[session]
+      return {
+        session,
+        pnl: Number(v.pnl.toFixed(2)),
+        trades: v.count,
+        winRate: v.count ? Math.round((v.wins / v.count) * 100) : 0,
+        expectancy: v.count ? Number((v.pnl / v.count).toFixed(2)) : 0,
+      }
+    })
+  }, [displayTrades])
+
+  const byEmotion = useMemo(() => {
+    const map: Record<string, { pnl: number; count: number; wins: number }> = {}
+    displayTrades.forEach(t => {
+      const key = t.emotion ?? 'untracked'
+      if (!map[key]) map[key] = { pnl: 0, count: 0, wins: 0 }
+      const pnl = getTradeTotalPnl(t)
+      map[key].pnl += pnl
+      map[key].count++
+      if (pnl > 0) map[key].wins++
+    })
+    return Object.entries(map).map(([emotion, v]) => ({
+      emotion, pnl: Number(v.pnl.toFixed(2)), trades: v.count,
+      winRate: Math.round((v.wins / v.count) * 100),
+      expectancy: Number((v.pnl / v.count).toFixed(2)),
+    })).sort((a, b) => b.pnl - a.pnl)
+  }, [displayTrades])
+
+  const byGrade = useMemo(() => {
+    const map: Record<string, { pnl: number; count: number; wins: number }> = {}
+    displayTrades.forEach(t => {
+      const key = t.grade ?? 'ungraded'
+      if (!map[key]) map[key] = { pnl: 0, count: 0, wins: 0 }
+      const pnl = getTradeTotalPnl(t)
+      map[key].pnl += pnl
+      map[key].count++
+      if (pnl > 0) map[key].wins++
+    })
+    return Object.entries(map).map(([grade, v]) => ({
+      grade, pnl: Number(v.pnl.toFixed(2)), trades: v.count,
+      winRate: Math.round((v.wins / v.count) * 100),
+      expectancy: Number((v.pnl / v.count).toFixed(2)),
+    })).sort((a, b) => b.pnl - a.pnl)
+  }, [displayTrades])
+
   const streaks = useMemo(() => {
     const sorted = [...displayTrades].sort((a, b) => new Date(a.exitTime).getTime() - new Date(b.exitTime).getTime())
     let maxWin = 0, maxLoss = 0, curWin = 0, curLoss = 0
@@ -139,27 +256,40 @@ export function AnalyticsClient({ trades }: Props) {
   if (!displayTrades.length) {
     return (
       <div className="flex items-center justify-center h-64 text-muted-foreground text-sm">
-        Import trades to see your analytics
+        No trades in this range. Try another range or import more trades.
       </div>
     )
   }
 
   return (
-    <Tabs defaultValue="diary">
+    <Tabs defaultValue="overview">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <TabsList>
-          <TabsTrigger value="diary">Trading Diary</TabsTrigger>
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="diary">Trading Diary</TabsTrigger>
           <TabsTrigger value="timing">Timing</TabsTrigger>
+          <TabsTrigger value="behavior">Behavior</TabsTrigger>
           <TabsTrigger value="symbols">Symbols</TabsTrigger>
         </TabsList>
         <div className="flex items-center gap-3">
+          <Select value={range} onValueChange={(v) => setRange(v as RangeKey)}>
+            <SelectTrigger className="h-9 w-36">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All time</SelectItem>
+              <SelectItem value="7d">Last 7 days</SelectItem>
+              <SelectItem value="30d">Last 30 days</SelectItem>
+              <SelectItem value="90d">Last 90 days</SelectItem>
+              <SelectItem value="ytd">Year to date</SelectItem>
+            </SelectContent>
+          </Select>
           <div className="flex items-center gap-2 rounded-lg border border-border px-3 h-9">
             <Switch checked={consolidatePartials} onCheckedChange={updateConsolidatePartials} />
             <span className="text-xs font-semibold">Consolidate partials</span>
           </div>
           <span className="text-xs text-muted-foreground">
-            {displayTrades.length} trade{displayTrades.length !== 1 ? 's' : ''}
+            {displayTrades.length} / {consolidatedTrades.length} trades
           </span>
         </div>
       </div>
@@ -171,6 +301,38 @@ export function AnalyticsClient({ trades }: Props) {
 
       {/* ══════════════ OVERVIEW TAB ══════════════ */}
       <TabsContent value="overview" className="space-y-6">
+        <Card className="overflow-hidden border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 via-cyan-500/5 to-transparent">
+          <CardContent className="p-5">
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-wider text-muted-foreground">
+                  Performance snapshot · {RANGE_LABELS[range]}
+                </p>
+                <p className={cn('text-3xl font-black tabular-nums mt-1', stats.netPnl >= 0 ? 'text-emerald-500' : 'text-red-500')}>
+                  {formatCurrency(stats.netPnl)}
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                <p className="text-muted-foreground">Profit factor</p>
+                <p className="font-bold tabular-nums text-right">{Number.isFinite(stats.profitFactor) ? stats.profitFactor.toFixed(2) : 'Inf'}</p>
+                <p className="text-muted-foreground">Max drawdown</p>
+                <p className="font-bold tabular-nums text-right text-red-500">{formatCurrency(-stats.maxDrawdown)}</p>
+                <p className="text-muted-foreground">Avg daily P&L</p>
+                <p className={cn('font-bold tabular-nums text-right', consistency.avgDailyPnl >= 0 ? 'text-emerald-500' : 'text-red-500')}>
+                  {formatCurrency(consistency.avgDailyPnl)}
+                </p>
+                <p className="text-muted-foreground">Consistency score</p>
+                <p className={cn(
+                  'font-bold tabular-nums text-right',
+                  consistency.score >= 70 ? 'text-emerald-500' : consistency.score >= 50 ? 'text-amber-500' : 'text-red-500'
+                )}>
+                  {consistency.score}%
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[
             { label: 'Avg Win',     value: `+$${stats.avgWin.toFixed(2)}`,    color: 'text-emerald-500' },
@@ -191,13 +353,46 @@ export function AnalyticsClient({ trades }: Props) {
           ))}
         </div>
 
+        <div className="grid lg:grid-cols-2 gap-4">
+          <Card>
+            <CardHeader className="pb-2"><CardTitle className="text-sm font-semibold">Equity Curve</CardTitle></CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={220}>
+                <LineChart data={equityCurve} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
+                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: axisColor }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+                  <YAxis tick={{ fontSize: 10, fill: axisColor }} tickLine={false} axisLine={false} tickFormatter={v => `$${v}`} width={52} />
+                  <Tooltip content={<ChartTooltip formatter={(v: number) => formatCurrency(v)} />} />
+                  <ReferenceLine y={0} stroke={axisColor} strokeDasharray="3 3" strokeOpacity={0.4} />
+                  <Line type="monotone" dataKey="cumPnl" stroke="#10b981" strokeWidth={2} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2"><CardTitle className="text-sm font-semibold">Drawdown Curve</CardTitle></CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={220}>
+                <AreaChart data={equityCurve} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
+                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: axisColor }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+                  <YAxis tick={{ fontSize: 10, fill: axisColor }} tickLine={false} axisLine={false} tickFormatter={v => `$${v}`} width={52} />
+                  <Tooltip content={<ChartTooltip formatter={(v: number) => `${formatCurrency(-v)} from peak`} />} />
+                  <Area type="monotone" dataKey="drawdown" stroke="#ef4444" fill="#ef4444" fillOpacity={0.15} strokeWidth={2} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm font-semibold">Daily P&L</CardTitle></CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={dailyPnl} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
-                <XAxis dataKey="date" tick={{ fontSize: 10, fill: axisColor }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+                <XAxis dataKey="dateLabel" tick={{ fontSize: 10, fill: axisColor }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
                 <YAxis tick={{ fontSize: 10, fill: axisColor }} tickLine={false} axisLine={false} tickFormatter={v => `$${v}`} width={52} />
                 <Tooltip content={<ChartTooltip formatter={(v: number) => formatCurrency(v)} />} />
                 <ReferenceLine y={0} stroke={axisColor} strokeDasharray="3 3" strokeOpacity={0.4} />
@@ -289,6 +484,45 @@ export function AnalyticsClient({ trades }: Props) {
         </Card>
 
         <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold">Session Performance (Asia / London / New York)</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-xs text-muted-foreground">
+              Buckets by entry time: Asia (21:00-06:59), London (07:00-12:59), New York (13:00-20:59)
+            </p>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={bySession} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
+                <XAxis dataKey="session" tick={{ fontSize: 11, fill: axisColor }} tickLine={false} axisLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: axisColor }} tickLine={false} axisLine={false} tickFormatter={v => `$${v}`} width={52} />
+                <Tooltip content={<ChartTooltip formatter={(v: number) => formatCurrency(v)} />} />
+                <ReferenceLine y={0} stroke={axisColor} strokeDasharray="3 3" strokeOpacity={0.4} />
+                <Bar dataKey="pnl" radius={[4, 4, 0, 0]} maxBarSize={62}>
+                  {bySession.map((e, i) => <Cell key={i} fill={e.pnl >= 0 ? '#10b981' : '#ef4444'} fillOpacity={0.85} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+
+            <div className="grid md:grid-cols-3 gap-3">
+              {bySession.map((s) => (
+                <div key={s.session} className="rounded-lg border border-border p-3">
+                  <p className="text-xs uppercase tracking-wider text-muted-foreground">{s.session}</p>
+                  <p className={cn('text-base font-black mt-1 tabular-nums', s.pnl >= 0 ? 'text-emerald-500' : 'text-red-500')}>
+                    {formatCurrency(s.pnl)}
+                  </p>
+                  <div className="mt-2 text-xs text-muted-foreground space-y-1">
+                    <p>{s.trades} trade{s.trades !== 1 ? 's' : ''}</p>
+                    <p>Win rate: <span className={cn('font-bold', s.winRate >= 50 ? 'text-emerald-500' : 'text-red-500')}>{s.winRate}%</span></p>
+                    <p>Expectancy: <span className={cn('font-bold', s.expectancy >= 0 ? 'text-emerald-500' : 'text-red-500')}>{formatCurrency(s.expectancy)}</span></p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm font-semibold">Entry Time vs P&L</CardTitle></CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={200}>
@@ -324,6 +558,76 @@ export function AnalyticsClient({ trades }: Props) {
       </TabsContent>
 
       {/* ══════════════ SYMBOLS TAB ══════════════ */}
+      <TabsContent value="behavior" className="space-y-6">
+        <div className="grid lg:grid-cols-2 gap-4">
+          <Card>
+            <CardHeader className="pb-2"><CardTitle className="text-sm font-semibold">Performance by Emotion</CardTitle></CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={byEmotion} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
+                  <XAxis dataKey="emotion" tick={{ fontSize: 10, fill: axisColor }} tickLine={false} axisLine={false} />
+                  <YAxis tick={{ fontSize: 10, fill: axisColor }} tickLine={false} axisLine={false} tickFormatter={v => `$${v}`} width={52} />
+                  <Tooltip content={<ChartTooltip formatter={(v: number) => formatCurrency(v)} />} />
+                  <ReferenceLine y={0} stroke={axisColor} strokeDasharray="3 3" strokeOpacity={0.4} />
+                  <Bar dataKey="pnl" radius={[4, 4, 0, 0]} maxBarSize={44}>
+                    {byEmotion.map((e, i) => <Cell key={i} fill={e.pnl >= 0 ? '#10b981' : '#ef4444'} fillOpacity={0.85} />)}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2"><CardTitle className="text-sm font-semibold">Performance by Grade</CardTitle></CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={byGrade} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
+                  <XAxis dataKey="grade" tick={{ fontSize: 10, fill: axisColor }} tickLine={false} axisLine={false} />
+                  <YAxis tick={{ fontSize: 10, fill: axisColor }} tickLine={false} axisLine={false} tickFormatter={v => `$${v}`} width={52} />
+                  <Tooltip content={<ChartTooltip formatter={(v: number) => formatCurrency(v)} />} />
+                  <ReferenceLine y={0} stroke={axisColor} strokeDasharray="3 3" strokeOpacity={0.4} />
+                  <Bar dataKey="pnl" radius={[4, 4, 0, 0]} maxBarSize={44}>
+                    {byGrade.map((e, i) => <Cell key={i} fill={e.pnl >= 0 ? '#10b981' : '#ef4444'} fillOpacity={0.85} />)}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card>
+          <CardHeader className="pb-3"><CardTitle className="text-sm font-semibold">Behavior Summary</CardTitle></CardHeader>
+          <CardContent className="grid md:grid-cols-2 gap-4 text-sm">
+            <div className="rounded-lg border border-border p-4">
+              <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Emotion insights</p>
+              {byEmotion.length > 0 ? (
+                <div className="space-y-1">
+                  <p>Best emotion: <span className="font-bold">{byEmotion[0].emotion}</span> ({formatCurrency(byEmotion[0].pnl)})</p>
+                  <p>Highest expectancy: <span className="font-bold">{[...byEmotion].sort((a, b) => b.expectancy - a.expectancy)[0].emotion}</span></p>
+                  <p>Most used: <span className="font-bold">{[...byEmotion].sort((a, b) => b.trades - a.trades)[0].emotion}</span></p>
+                </div>
+              ) : (
+                <p className="text-muted-foreground">No emotion data in this range.</p>
+              )}
+            </div>
+            <div className="rounded-lg border border-border p-4">
+              <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Grade insights</p>
+              {byGrade.length > 0 ? (
+                <div className="space-y-1">
+                  <p>Best grade: <span className="font-bold">{byGrade[0].grade}</span> ({formatCurrency(byGrade[0].pnl)})</p>
+                  <p>Highest expectancy: <span className="font-bold">{[...byGrade].sort((a, b) => b.expectancy - a.expectancy)[0].grade}</span></p>
+                  <p>Most used: <span className="font-bold">{[...byGrade].sort((a, b) => b.trades - a.trades)[0].grade}</span></p>
+                </div>
+              ) : (
+                <p className="text-muted-foreground">No grade data in this range.</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
+
       <TabsContent value="symbols" className="space-y-6">
         <Card>
           <CardHeader className="pb-3"><CardTitle className="text-sm font-semibold">Performance by Symbol</CardTitle></CardHeader>
