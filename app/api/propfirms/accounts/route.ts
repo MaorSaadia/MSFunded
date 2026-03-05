@@ -12,7 +12,7 @@ const accountSchema = z.object({
   firmId: z.string().uuid(),
   accountLabel: z.string().min(1),
   accountSize: z.number().positive(),
-  stage: z.enum(['evaluation', 'phase2', 'funded']).default('evaluation'),
+  stage: z.enum(['evaluation', 'funded']).default('evaluation'),
   profitTarget: z.number().nullable().optional(),
   maxDrawdown: z.number().nullable().optional(),
   dailyLossLimit: z.number().nullable().optional(),

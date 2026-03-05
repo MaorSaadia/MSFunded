@@ -66,7 +66,7 @@ export function PropFirmDashboard({ firms, allTrades }: Props) {
           </div>
           <h2 className="text-lg font-black mb-2">No prop firms yet</h2>
           <p className="text-sm text-muted-foreground mb-6 max-w-sm">
-            Add your prop firms and challenge accounts to track rules, targets, and progress in one place.
+            Add your prop firms and accounts to track rules, targets, and progress in one place.
           </p>
           <Button
             onClick={() => setAddFirmOpen(true)}

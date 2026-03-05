@@ -22,73 +22,86 @@ const PROP_FIRMS = [
   {
     firm: 'Apex',
     accounts: [
-      { label: 'Apex 25K Eval',    profitTarget: 1500,  maxDrawdown: 1500,  dailyLossLimit: 1000, hasDailyLimit: false,  minDays: 7,  maxDays: 0,  trailing: true,  consistency50: false  },
-      { label: 'Apex 50K Eval',    profitTarget: 3000,  maxDrawdown: 2500,  dailyLossLimit: 1500, hasDailyLimit: false,  minDays: 7,  maxDays: 0,  trailing: true,  consistency50: false  },
-      { label: 'Apex 100K Eval',   profitTarget: 6000,  maxDrawdown: 3000,  dailyLossLimit: 3000, hasDailyLimit: false,  minDays: 7,  maxDays: 0,  trailing: true,  consistency50: false  },
-      { label: 'Apex 150K Eval',   profitTarget: 9000,  maxDrawdown: 4500,  dailyLossLimit: 4500, hasDailyLimit: false,  minDays: 7,  maxDays: 0,  trailing: true,  consistency50: false  },
+      // EOD Trailing Drawdown Program (Legacy Full - most common)
+      { label: 'Apex 25K Eval IND',    profitTarget: 1500,  maxDrawdown: 1500,  dailyLossLimit: 0,    hasDailyLimit: false, minDays: 7,  maxDays: 30, trailing: true,  consistency50: false },
+      { label: 'Apex 50K Eval IND',    profitTarget: 3000,  maxDrawdown: 2500,  dailyLossLimit: 0,    hasDailyLimit: false, minDays: 7,  maxDays: 30, trailing: true,  consistency50: false },
+      { label: 'Apex 100K Eval IND',   profitTarget: 6000,  maxDrawdown: 3000,  dailyLossLimit: 0,    hasDailyLimit: false, minDays: 7,  maxDays: 30, trailing: true,  consistency50: false },
+      { label: 'Apex 150K Eval IND',   profitTarget: 9000,  maxDrawdown: 5000,  dailyLossLimit: 0,    hasDailyLimit: false, minDays: 7,  maxDays: 30, trailing: true,  consistency50: false },
+  
+      // EOD Trailing Drawdown Program (no min days, 30 day max)
+      { label: 'Apex 25K EOD',     profitTarget: 1500,  maxDrawdown: 1000,  dailyLossLimit: 500,  hasDailyLimit: true,  minDays: 0,  maxDays: 30,   trailing: false,  consistency50: false },
+      { label: 'Apex 50K EOD',     profitTarget: 3000,  maxDrawdown: 2000,  dailyLossLimit: 1000, hasDailyLimit: true,  minDays: 0,  maxDays: 30,   trailing: false,  consistency50: false },
+      { label: 'Apex 100K EOD',    profitTarget: 6000,  maxDrawdown: 3000,  dailyLossLimit: 1500, hasDailyLimit: true,  minDays: 0,  maxDays: 30,   trailing: false,  consistency50: false },
+      { label: 'Apex 150K EOD',    profitTarget: 9000,  maxDrawdown: 4000,  dailyLossLimit: 2000, hasDailyLimit: true,  minDays: 0,  maxDays: 30,   trailing: false,  consistency50: false },
     ],
   },
   {
     firm: 'TPT',
     accounts: [
-      { label: 'TPT 50K Eval',     profitTarget: 3000,  maxDrawdown: 2000,  dailyLossLimit: 0,    hasDailyLimit: false, minDays: 0,  maxDays: 0,  trailing: true,  consistency50: false },
-      { label: 'TPT 100K Eval',    profitTarget: 6000,  maxDrawdown: 3000,  dailyLossLimit: 0,    hasDailyLimit: false, minDays: 0,  maxDays: 0,  trailing: true,  consistency50: false },
-      { label: 'TPT 150K Eval',    profitTarget: 9000,  maxDrawdown: 4500,  dailyLossLimit: 0,    hasDailyLimit: false, minDays: 0,  maxDays: 0,  trailing: true,  consistency50: false },
+      // Take Profit Trader - DLL removed per JSON; min 5 trading days
+      { label: 'TPT 25K Eval',     profitTarget: 1500,     maxDrawdown: 1500,     dailyLossLimit: 0,    hasDailyLimit: false, minDays: 5,  maxDays: 0,    trailing: false,  consistency50: false }, // [VERIFY] exact values
+      { label: 'TPT 50K Eval',     profitTarget: 3000,     maxDrawdown: 2000,     dailyLossLimit: 0,    hasDailyLimit: false, minDays: 5,  maxDays: 0,    trailing: false,  consistency50: false }, // [VERIFY] exact values
+      { label: 'TPT 75K Eval',     profitTarget: 4500,     maxDrawdown: 2500,     dailyLossLimit: 0,    hasDailyLimit: false, minDays: 5,  maxDays: 0,    trailing: false,  consistency50: false }, // [VERIFY] exact values
+      { label: 'TPT 100K Eval',    profitTarget: 6000,     maxDrawdown: 3000,     dailyLossLimit: 0,    hasDailyLimit: false, minDays: 5,  maxDays: 0,    trailing: false,  consistency50: false }, // [VERIFY] exact values
+      { label: 'TPT 150K Eval',    profitTarget: 9000,     maxDrawdown: 4500,     dailyLossLimit: 0,    hasDailyLimit: false, minDays: 5,  maxDays: 0,    trailing: false,  consistency50: false }, // [VERIFY] exact values
     ],
   },
   {
     firm: 'Lucid',
     accounts: [
-      { label: 'Lucid 25K Eval',   profitTarget: 1500,  maxDrawdown: 1500,  dailyLossLimit: 750,  hasDailyLimit: true,  minDays: 5,  maxDays: 0,  trailing: false, consistency50: false },
-      { label: 'Lucid 50K Eval',   profitTarget: 3000,  maxDrawdown: 2500,  dailyLossLimit: 1250, hasDailyLimit: true,  minDays: 5,  maxDays: 0,  trailing: false, consistency50: false },
-      { label: 'Lucid 100K Eval',  profitTarget: 5000,  maxDrawdown: 4000,  dailyLossLimit: 2000, hasDailyLimit: true,  minDays: 5,  maxDays: 0,  trailing: false, consistency50: false },
+      // LucidBlack - 2 min days, 60% consistency, no DLL
+      { label: 'Lucid Black 25K',  profitTarget: 1250,  maxDrawdown: 1000,  dailyLossLimit: 0,    hasDailyLimit: false, minDays: 2,  maxDays: 0,    trailing: false, consistency50: false, consistencyRule: 60 },
+      { label: 'Lucid Black 50K',  profitTarget: 3000,  maxDrawdown: 2000,  dailyLossLimit: 0,    hasDailyLimit: false, minDays: 2,  maxDays: 0,    trailing: false, consistency50: false, consistencyRule: 60 },
+      { label: 'Lucid Black 100K', profitTarget: 6000,  maxDrawdown: 3000,  dailyLossLimit: 0,    hasDailyLimit: false, minDays: 2,  maxDays: 0,    trailing: false, consistency50: false, consistencyRule: 60 },
+      // LucidFlex - has DLL
+      { label: 'Lucid Flex 50K',   profitTarget: 3000,  maxDrawdown: 2000,  dailyLossLimit: 1200, hasDailyLimit: true,  minDays: 0,  maxDays: 0,    trailing: false, consistency50: false },
+      { label: 'Lucid Flex 100K',  profitTarget: 6000,  maxDrawdown: 3000,  dailyLossLimit: 1800, hasDailyLimit: true,  minDays: 0,  maxDays: 0,    trailing: false, consistency50: false },
+      // LucidDirect - 10 min days, 20% consistency
+      { label: 'Lucid Direct 25K', profitTarget: 1500,  maxDrawdown: 0,     dailyLossLimit: 0,    hasDailyLimit: false, minDays: 10, maxDays: 0,    trailing: false, consistency50: false, consistencyRule: 20 }, // [VERIFY] drawdown
+      { label: 'Lucid Direct 50K', profitTarget: 3000,  maxDrawdown: 2000,  dailyLossLimit: 1200, hasDailyLimit: true,  minDays: 10, maxDays: 0,    trailing: false, consistency50: false, consistencyRule: 20 },
+      { label: 'Lucid Direct 150K',profitTarget: 9000,  maxDrawdown: 6000,  dailyLossLimit: 3600, hasDailyLimit: true,  minDays: 10, maxDays: 0,    trailing: false, consistency50: false, consistencyRule: 20 },
     ],
   },
   {
     firm: 'Alpha',
     accounts: [
-      { label: 'Alpha 50K Eval',   profitTarget: 3000,  maxDrawdown: 2500,  dailyLossLimit: 1500, hasDailyLimit: true,  minDays: 5,  maxDays: 0,  trailing: true,  consistency50: false },
-      { label: 'Alpha 100K Eval',  profitTarget: 6000,  maxDrawdown: 4000,  dailyLossLimit: 2500, hasDailyLimit: true,  minDays: 5,  maxDays: 0,  trailing: true,  consistency50: false },
+      // Alpha Futures - 2 min days, 50% consistency eval
+      { label: 'Alpha 50K Eval',   profitTarget: 3000,  maxDrawdown: 2000,  dailyLossLimit: 0,    hasDailyLimit: false, minDays: 2,  maxDays: 0,    trailing: false,  consistency50: true  }, // [VERIFY] DLL
+      { label: 'Alpha 100K Eval',  profitTarget: 6000,  maxDrawdown: 4000,  dailyLossLimit: 0,    hasDailyLimit: false, minDays: 2,  maxDays: 0,    trailing: false,  consistency50: true  }, // [VERIFY] DLL
+      { label: 'Alpha 150K Eval',  profitTarget: 9000,  maxDrawdown: 6000,  dailyLossLimit: 0,    hasDailyLimit: false, minDays: 2,  maxDays: 0,    trailing: false,  consistency50: true  }, // [VERIFY] DLL
     ],
   },
   {
     firm: 'TopStep',
     accounts: [
-      { label: 'TopStep 50K',      profitTarget: 3000,  maxDrawdown: 2000,  dailyLossLimit: 1000, hasDailyLimit: true,  minDays: 0,  maxDays: 0,  trailing: false, consistency50: true },
-      { label: 'TopStep 100K',     profitTarget: 6000,  maxDrawdown: 3000,  dailyLossLimit: 2000, hasDailyLimit: true,  minDays: 0,  maxDays: 0,  trailing: false, consistency50: true },
-      { label: 'TopStep 150K',     profitTarget: 9000,  maxDrawdown: 4500,  dailyLossLimit: 3000, hasDailyLimit: true,  minDays: 0,  maxDays: 0,  trailing: false, consistency50: true },
+      // Trading Combine - trailing MLL, 50% consistency, 2 min days
+      { label: 'TopStep 50K',      profitTarget: 3000,  maxDrawdown: 2000,  dailyLossLimit: 1000, hasDailyLimit: true,  minDays: 2,  maxDays: 0,    trailing: false,  consistency50: true  },
+      { label: 'TopStep 100K',     profitTarget: 6000,  maxDrawdown: 3000,  dailyLossLimit: 2000, hasDailyLimit: true,  minDays: 2,  maxDays: 0,    trailing: false,  consistency50: true  },
+      { label: 'TopStep 150K',     profitTarget: 9000,  maxDrawdown: 4500,  dailyLossLimit: 3000, hasDailyLimit: true,  minDays: 2,  maxDays: 0,    trailing: false,  consistency50: true  },
     ],
   },
   {
     firm: 'MFF',
     accounts: [
-      { label: 'MFF 50K Eval',     profitTarget: 3000,  maxDrawdown: 2500,  dailyLossLimit: 0,    hasDailyLimit: false, minDays: 0,  maxDays: 0,  trailing: true,  consistency50: true },
-      { label: 'MFF 100K Eval',    profitTarget: 6000,  maxDrawdown: 3500,  dailyLossLimit: 0,    hasDailyLimit: false, minDays: 0,  maxDays: 0,  trailing: true,  consistency50: true },
+      // Rapid Plan - EOD trailing, 50% consistency eval only, 2 min days
+      { label: 'MFF Rapid 50K',    profitTarget: 3000,  maxDrawdown: 2000,  dailyLossLimit: 0,    hasDailyLimit: false, minDays: 2,  maxDays: 0,    trailing: false,  consistency50: true  },
+      // Scale Plan - EOD trailing, no DLL
+      { label: 'MFF Scale 50K',    profitTarget: 3000,  maxDrawdown: 2000,  dailyLossLimit: 0,    hasDailyLimit: false, minDays: 0,  maxDays: 0,    trailing: false,  consistency50: true },
+      { label: 'MFF Scale 100K',   profitTarget: 0,     maxDrawdown: 3000,  dailyLossLimit: 0,    hasDailyLimit: false, minDays: 0,  maxDays: 0,    trailing: false,  consistency50: true }, // [VERIFY] profit target
+      { label: 'MFF Scale 150K',   profitTarget: 0,     maxDrawdown: 4500,  dailyLossLimit: 0,    hasDailyLimit: false, minDays: 0,  maxDays: 0,    trailing: false,  consistency50: true }, // [VERIFY] profit target
     ],
   },
   {
     firm: 'Tradeify',
     accounts: [
-      { label: 'Tradeify 50K',     profitTarget: 3000,  maxDrawdown: 2500,  dailyLossLimit: 1250, hasDailyLimit: true,  minDays: 5,  maxDays: 0,  trailing: true,  consistency50: false },
-      { label: 'Tradeify 100K',    profitTarget: 6000,  maxDrawdown: 4000,  dailyLossLimit: 2000, hasDailyLimit: true,  minDays: 5,  maxDays: 0,  trailing: true,  consistency50: false },
-    ],
-  },
-  {
-    firm: 'FTMO',
-    accounts: [
-      { label: 'FTMO 10K Phase1',  profitTarget: 1000,  maxDrawdown: 1000,  dailyLossLimit: 500,  hasDailyLimit: true,  minDays: 4,  maxDays: 30, trailing: false, consistency50: false },
-      { label: 'FTMO 25K Phase1',  profitTarget: 2500,  maxDrawdown: 2500,  dailyLossLimit: 1250, hasDailyLimit: true,  minDays: 4,  maxDays: 30, trailing: false, consistency50: false },
-      { label: 'FTMO 50K Phase1',  profitTarget: 5000,  maxDrawdown: 5000,  dailyLossLimit: 2500, hasDailyLimit: true,  minDays: 4,  maxDays: 30, trailing: false, consistency50: false },
-      { label: 'FTMO 100K Phase1', profitTarget: 10000, maxDrawdown: 10000, dailyLossLimit: 5000, hasDailyLimit: true,  minDays: 4,  maxDays: 30, trailing: false, consistency50: false },
-    ],
-  },
-  {
-    firm: 'FundedNext',
-    accounts: [
-      { label: 'FundedNext 15K',   profitTarget: 1500,  maxDrawdown: 900,   dailyLossLimit: 450,  hasDailyLimit: true,  minDays: 5,  maxDays: 0,  trailing: false, consistency50: false },
-      { label: 'FundedNext 25K',   profitTarget: 2500,  maxDrawdown: 1500,  dailyLossLimit: 750,  hasDailyLimit: true,  minDays: 5,  maxDays: 0,  trailing: false, consistency50: false },
-      { label: 'FundedNext 50K',   profitTarget: 5000,  maxDrawdown: 3000,  dailyLossLimit: 1500, hasDailyLimit: true,  minDays: 5,  maxDays: 0,  trailing: false, consistency50: false },
-      { label: 'FundedNext 100K',  profitTarget: 10000, maxDrawdown: 6000,  dailyLossLimit: 3000, hasDailyLimit: true,  minDays: 5,  maxDays: 0,  trailing: false, consistency50: false },
+      // SELECT Program - EOD trailing, 40% consistency eval, 3 min days, no DLL in eval
+      { label: 'Tradeify Select 50K',  profitTarget: 2500,  maxDrawdown: 2000,  dailyLossLimit: 0,    hasDailyLimit: false, minDays: 3,  maxDays: 0,    trailing: false,  consistency50: false, consistencyRule: 40 },
+      { label: 'Tradeify Select 100K', profitTarget: 6000,  maxDrawdown: 3000,  dailyLossLimit: 0,    hasDailyLimit: false, minDays: 3,  maxDays: 0,    trailing: false,  consistency50: false, consistencyRule: 40 },
+      { label: 'Tradeify Select 150K', profitTarget: 9000,  maxDrawdown: 4500,  dailyLossLimit: 0,    hasDailyLimit: false, minDays: 3,  maxDays: 0,    trailing: false,  consistency50: false, consistencyRule: 40 },
+      // GROWTH Program - EOD trailing, has DLL, no min days
+      { label: 'Tradeify Growth 50K',  profitTarget: 3000,  maxDrawdown: 2000,  dailyLossLimit: 1250, hasDailyLimit: true,  minDays: 0,  maxDays: 0,    trailing: true,  consistency50: false },
+      { label: 'Tradeify Growth 100K', profitTarget: 6000,  maxDrawdown: 3500,  dailyLossLimit: 2500, hasDailyLimit: true,  minDays: 0,  maxDays: 0,    trailing: true,  consistency50: false },
+      { label: 'Tradeify Growth 150K', profitTarget: 9000,  maxDrawdown: 5000,  dailyLossLimit: 3750, hasDailyLimit: true,  minDays: 0,  maxDays: 0,    trailing: true,  consistency50: false },
     ],
   },
 ]
@@ -101,8 +114,6 @@ const FIRM_BUTTON_LABEL: Record<string, string> = {
   TopStep: 'TopStep',
   MFF: 'MFFU',
   Tradeify: 'Tradeify',
-  FTMO: 'FTMO',
-  FundedNext: 'FundedNext',
 }
 
 interface Props {
@@ -186,8 +197,8 @@ export function AddAccountModal({ firmId, onClose, onSaved, allTrades }: Props) 
     <Dialog open={!!firmId} onOpenChange={open => !open && onClose()}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add Challenge Account</DialogTitle>
-          <DialogDescription>Set up rules and link your trades</DialogDescription>
+          <DialogTitle>Add Prop Firm Account</DialogTitle>
+          <DialogDescription>Set account rules and link your trades</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSave} className="space-y-5">
@@ -287,12 +298,11 @@ export function AddAccountModal({ firmId, onClose, onSaved, allTrades }: Props) 
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs">Challenge Stage</Label>
+            <Label className="text-xs">Account Stage</Label>
             <Select value={stage} onValueChange={setStage}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="evaluation">Evaluation (Phase 1)</SelectItem>
-                <SelectItem value="phase2">Phase 2</SelectItem>
+                <SelectItem value="evaluation">Evaluation / Challenge</SelectItem>
                 <SelectItem value="funded">Funded Account</SelectItem>
               </SelectContent>
             </Select>
@@ -300,7 +310,10 @@ export function AddAccountModal({ firmId, onClose, onSaved, allTrades }: Props) 
 
           <Separator />
 
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Challenge Rules</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Account Rules</p>
+          <p className="text-[11px] text-muted-foreground -mt-3">
+            If your prop firm is new or rules changed, enter your own values here.
+          </p>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">

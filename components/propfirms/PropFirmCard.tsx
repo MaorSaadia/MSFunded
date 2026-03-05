@@ -7,7 +7,7 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import {
   Plus, ChevronDown, ChevronUp, Trash2,
-  AlertTriangle, CheckCircle2, XCircle, Clock
+  AlertTriangle, CheckCircle2, XCircle, Clock, Pencil
 } from 'lucide-react'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Progress } from '@/components/ui/progress'
 import { useConfirm } from '@/components/layout/ConfirmDialogProvider'
+import { EditAccountModal } from '@/components/propfirms/EditAccountModal'
 import { cn, formatCurrency, calcTrailingDrawdown, getTradeTotalPnl } from '@/lib/utils'
 import type { PropFirm, PropFirmAccount, Trade } from '@/lib/db/schema'
 
@@ -32,6 +33,11 @@ interface Props {
 const STAGE_LABELS: Record<string, string> = {
   evaluation: 'Evaluation', phase2: 'Phase 2',
   funded: 'Funded', failed: 'Failed', passed: 'Passed',
+}
+
+function getStageLabel(account: PropFirmAccount) {
+  return STAGE_LABELS[account.stage ?? 'evaluation']
+    || 'Unknown Stage'
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
@@ -102,6 +108,7 @@ export function PropFirmCard({ firm, allTrades, onAddAccount, onRefresh }: Props
   const confirmAction = useConfirm()
   const [expanded, setExpanded] = useState(true)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [editingAccount, setEditingAccount] = useState<PropFirmAccount | null>(null)
 
   const color = firm.logoColor ?? FIRM_COLORS[0]
 
@@ -147,6 +154,7 @@ export function PropFirmCard({ firm, allTrades, onAddAccount, onRefresh }: Props
   }
 
   return (
+    <>
     <Card>
       {/* Firm header */}
       <CardHeader className="pb-3">
@@ -207,7 +215,7 @@ export function PropFirmCard({ firm, allTrades, onAddAccount, onRefresh }: Props
                       <div>
                         <p className="text-sm font-black">{account.accountLabel}</p>
                         <p className="text-xs text-muted-foreground">
-                          ${Number(account.accountSize).toLocaleString()} {' - '} {STAGE_LABELS[account.stage ?? 'evaluation']}
+                          ${Number(account.accountSize).toLocaleString()} {' - '} {getStageLabel(account)}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
@@ -242,6 +250,14 @@ export function PropFirmCard({ firm, allTrades, onAddAccount, onRefresh }: Props
                           disabled={deletingId === account.id}
                           onClick={() => handleDeleteAccount(account.id)}>
                           <Trash2 className="w-3 h-3" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 text-muted-foreground hover:text-foreground hover:bg-accent"
+                          onClick={() => setEditingAccount(account)}
+                        >
+                          <Pencil className="w-3 h-3" />
                         </Button>
                       </div>
                     </div>
@@ -401,6 +417,15 @@ export function PropFirmCard({ firm, allTrades, onAddAccount, onRefresh }: Props
         </CardContent>
       )}
     </Card>
+      <EditAccountModal
+        account={editingAccount}
+        onClose={() => setEditingAccount(null)}
+        onSaved={() => {
+          setEditingAccount(null)
+          onRefresh()
+        }}
+      />
+    </>
   )
 }
 

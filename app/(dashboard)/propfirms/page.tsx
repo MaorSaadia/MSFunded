@@ -30,7 +30,7 @@ export default async function PropFirmsPage() {
       <div>
         <h1 className="text-2xl font-black tracking-tight">Prop Firm Tracker</h1>
         <p className="text-sm text-muted-foreground mt-0.5">
-          Track your challenges, rules, and progress across all firms
+          Track your account rules and progress across all firms
         </p>
       </div>
       <PropFirmDashboard firms={firms as any} allTrades={allTrades} />
