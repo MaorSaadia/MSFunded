@@ -16,6 +16,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Progress } from '@/components/ui/progress'
 import { useConfirm } from '@/components/layout/ConfirmDialogProvider'
 import { EditAccountModal } from '@/components/propfirms/EditAccountModal'
+import { toFundedRulesConfig } from '@/lib/propfirmPresets'
 import { cn, formatCurrency, calcTrailingDrawdown, getTradeTotalPnl } from '@/lib/utils'
 import type { PropFirm, PropFirmAccount, Trade } from '@/lib/db/schema'
 
@@ -69,6 +70,7 @@ function calcProgress(account: PropFirmAccount, trades: Trade[]) {
   })
   const worstDay = Math.min(...Object.values(dailyMap), 0)
   const bestDay = Math.max(...Object.values(dailyMap), 0)
+  const dailyPnlValues = Object.values(dailyMap)
   const {
     currentDrawdownUsed: trailingDrawdownUsed,
     peakBalance,
@@ -96,6 +98,7 @@ function calcProgress(account: PropFirmAccount, trades: Trade[]) {
 
   return {
     pnl, tradingDays, worstDay, bestDay,
+    dailyPnlValues,
     trailingDrawdownUsed, staticDrawdownUsed, drawdownUsed, peakBalance,
     remainingLossBeforeFail,
     profitPct, drawdownPct, dailyLossPct, daysPct,
@@ -200,6 +203,35 @@ export function PropFirmCard({ firm, allTrades, onAddAccount, onRefresh }: Props
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {firm.accounts.map(account => {
                 const progress = calcProgress(account, allTrades)
+                const fundedRules = toFundedRulesConfig(account.customRules)
+                const payout = fundedRules?.payout
+                const accountSizeNum = Number(account.accountSize ?? 0)
+                const currentBalance = accountSizeNum + progress.pnl
+                const minTradeDays = payout?.minTradeDays ?? 0
+                const minDailyProfitUsd = payout?.minDailyProfitUsd ?? 0
+                const qualifyingDays = minDailyProfitUsd > 0
+                  ? progress.dailyPnlValues.filter(dayPnl => dayPnl >= minDailyProfitUsd).length
+                  : progress.tradingDays
+                const daysProgressPct = minTradeDays > 0 ? Math.min((qualifyingDays / minTradeDays) * 100, 100) : 0
+                const minBalanceToRequestUsd = payout?.minBalanceToRequestUsd ?? 0
+                const balanceProgressPct = minBalanceToRequestUsd > 0
+                  ? Math.min((currentBalance / minBalanceToRequestUsd) * 100, 100)
+                  : 0
+                const maxConsistencyPercent = payout?.maxConsistencyPercent ?? 0
+                const totalPositivePnl = progress.dailyPnlValues.filter(dayPnl => dayPnl > 0)
+                  .reduce((sum, dayPnl) => sum + dayPnl, 0)
+                const bestPositiveDay = Math.max(...progress.dailyPnlValues, 0)
+                const currentConsistencyPercent = totalPositivePnl > 0
+                  ? (bestPositiveDay / totalPositivePnl) * 100
+                  : 0
+                const consistencyProgressPct = maxConsistencyPercent > 0
+                  ? Math.min((currentConsistencyPercent / maxConsistencyPercent) * 100, 100)
+                  : 0
+                const daysEligible = minTradeDays > 0 ? qualifyingDays >= minTradeDays : true
+                const balanceEligible = minBalanceToRequestUsd > 0 ? currentBalance >= minBalanceToRequestUsd : true
+                const consistencyEligible = maxConsistencyPercent > 0 ? currentConsistencyPercent <= maxConsistencyPercent : true
+                const hasEligibilityChecks = minTradeDays > 0 || minBalanceToRequestUsd > 0 || maxConsistencyPercent > 0
+                const isPayoutEligible = hasEligibilityChecks && daysEligible && balanceEligible && consistencyEligible
                 const statusCfg = STATUS_CONFIG[account.status ?? 'active']
                 const StatusIcon = statusCfg.icon
 
@@ -400,6 +432,65 @@ export function PropFirmCard({ firm, allTrades, onAddAccount, onRefresh }: Props
                             <div className="h-full rounded-full bg-emerald-500 transition-all"
                               style={{ width: `${progress.daysPct}%` }} />
                           </div>
+                        </div>
+                      )}
+
+                      {account.stage === 'funded' && fundedRules && (
+                        <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-500">Payout Eligibility</p>
+                            {isPayoutEligible && (
+                              <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/40">Eligible</Badge>
+                            )}
+                          </div>
+
+                          {minTradeDays > 0 && (
+                            <div>
+                              <div className="flex justify-between text-[10px] mb-1">
+                                <span className="text-muted-foreground">Qualifying Days</span>
+                                <span className="font-bold text-muted-foreground">
+                                  {qualifyingDays} / {minTradeDays}
+                                  {minDailyProfitUsd > 0 ? ` (${formatCurrency(minDailyProfitUsd)}+ day)` : ''}
+                                </span>
+                              </div>
+                              <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                                <div className="h-full rounded-full bg-emerald-500 transition-all"
+                                  style={{ width: `${daysProgressPct}%` }} />
+                              </div>
+                            </div>
+                          )}
+
+                          {minBalanceToRequestUsd > 0 && (
+                            <div>
+                              <div className="flex justify-between text-[10px] mb-1">
+                                <span className="text-muted-foreground">Balance Target</span>
+                                <span className="font-bold text-muted-foreground">
+                                  {formatCurrency(currentBalance)} / {formatCurrency(minBalanceToRequestUsd)}
+                                </span>
+                              </div>
+                              <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                                <div className={cn('h-full rounded-full transition-all', balanceEligible ? 'bg-emerald-500' : 'bg-blue-500')}
+                                  style={{ width: `${balanceProgressPct}%` }} />
+                              </div>
+                            </div>
+                          )}
+
+                          {maxConsistencyPercent > 0 && (
+                            <div>
+                              <div className="flex justify-between text-[10px] mb-1">
+                                <span className="text-muted-foreground">Consistency Cap</span>
+                                <span className={cn('font-bold', consistencyEligible ? 'text-muted-foreground' : 'text-red-500')}>
+                                  {currentConsistencyPercent.toFixed(1)}% / {maxConsistencyPercent}%
+                                </span>
+                              </div>
+                              <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                                <div
+                                  className={cn('h-full rounded-full transition-all', consistencyEligible ? 'bg-emerald-500' : 'bg-red-500')}
+                                  style={{ width: `${consistencyProgressPct}%` }}
+                                />
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>

@@ -10,12 +10,37 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
-import type { PropFirmAccount } from '@/lib/db/schema'
+import {
+  toFundedRulesConfig,
+} from '@/lib/propfirmPresets'
+import type { PropFirmAccount, PropFirmCustomRules } from '@/lib/db/schema'
 
 interface Props {
   account: PropFirmAccount | null
   onClose: () => void
   onSaved: () => void
+}
+
+function serializeFundedCustomRules(input: {
+  stage: string
+  minTradeDays: string
+  minDailyProfitUsd: string
+  minBalanceToRequestUsd: string
+  maxConsistencyPercent: string
+  notes: string
+}): PropFirmCustomRules {
+  if (input.stage !== 'funded') return []
+  return {
+    payout: {
+      minTradeDays: input.minTradeDays ? Number(input.minTradeDays) : undefined,
+      minDailyProfitUsd: input.minDailyProfitUsd ? Number(input.minDailyProfitUsd) : undefined,
+      minBalanceToRequestUsd: input.minBalanceToRequestUsd ? Number(input.minBalanceToRequestUsd) : undefined,
+      maxConsistencyPercent: input.maxConsistencyPercent ? Number(input.maxConsistencyPercent) : undefined,
+      notes: input.notes.trim()
+        ? input.notes.split('\n').map(note => note.trim()).filter(Boolean)
+        : undefined,
+    },
+  }
 }
 
 export function EditAccountModal({ account, onClose, onSaved }: Props) {
@@ -32,6 +57,11 @@ export function EditAccountModal({ account, onClose, onSaved }: Props) {
   const [weekendHolding, setWeekendHolding] = useState(false)
   const [notes, setNotes] = useState('')
   const [loading, setLoading] = useState(false)
+  const [fundedMinTradeDays, setFundedMinTradeDays] = useState('')
+  const [fundedMinDailyProfit, setFundedMinDailyProfit] = useState('')
+  const [fundedMinBalance, setFundedMinBalance] = useState('')
+  const [fundedMaxConsistencyPercent, setFundedMaxConsistencyPercent] = useState('')
+  const [fundedRuleNotes, setFundedRuleNotes] = useState('')
 
   const open = !!account
 
@@ -50,6 +80,13 @@ export function EditAccountModal({ account, onClose, onSaved }: Props) {
     setNewsTrading(Boolean(account.newsTrading))
     setWeekendHolding(Boolean(account.weekendHolding))
     setNotes(account.notes ?? '')
+
+    const funded = toFundedRulesConfig(account.customRules)
+    setFundedMinTradeDays(funded?.payout?.minTradeDays != null ? String(funded.payout.minTradeDays) : '')
+    setFundedMinDailyProfit(funded?.payout?.minDailyProfitUsd != null ? String(funded.payout.minDailyProfitUsd) : '')
+    setFundedMinBalance(funded?.payout?.minBalanceToRequestUsd != null ? String(funded.payout.minBalanceToRequestUsd) : '')
+    setFundedMaxConsistencyPercent(funded?.payout?.maxConsistencyPercent != null ? String(funded.payout.maxConsistencyPercent) : '')
+    setFundedRuleNotes((funded?.payout?.notes ?? []).join('\n'))
   }, [account])
 
   async function handleSave(e: React.FormEvent) {
@@ -72,6 +109,14 @@ export function EditAccountModal({ account, onClose, onSaved }: Props) {
           consistencyRule,
           newsTrading,
           weekendHolding,
+          customRules: serializeFundedCustomRules({
+            stage,
+            minTradeDays: fundedMinTradeDays,
+            minDailyProfitUsd: fundedMinDailyProfit,
+            minBalanceToRequestUsd: fundedMinBalance,
+            maxConsistencyPercent: fundedMaxConsistencyPercent,
+            notes: fundedRuleNotes,
+          }),
           notes,
         }),
       })
@@ -100,10 +145,7 @@ export function EditAccountModal({ account, onClose, onSaved }: Props) {
         <form onSubmit={handleSave} className="space-y-4">
           <div className="space-y-1.5">
             <Label className="text-xs">Account Stage</Label>
-            <Select
-              value={stage}
-              onValueChange={setStage}
-            >
+            <Select value={stage} onValueChange={setStage}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="evaluation">Evaluation</SelectItem>
@@ -112,24 +154,64 @@ export function EditAccountModal({ account, onClose, onSaved }: Props) {
             </Select>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label className="text-xs">Profit Target ($)</Label>
-              <Input type="number" value={profitTarget} onChange={e => setProfitTarget(e.target.value)} />
+          {stage === 'funded' && (
+            <div className="space-y-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-emerald-500">Funded Payout Rules</p>
+              <p className="text-[11px] text-muted-foreground">
+                Enter only the payout tracking rules you care about.
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Min Trade Days</Label>
+                  <Input type="number" value={fundedMinTradeDays} onChange={e => setFundedMinTradeDays(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Min Daily Profit ($)</Label>
+                  <Input type="number" value={fundedMinDailyProfit} onChange={e => setFundedMinDailyProfit(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Min Balance To Request ($)</Label>
+                  <Input type="number" value={fundedMinBalance} onChange={e => setFundedMinBalance(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Max Consistency Day (%)</Label>
+                  <Input type="number" value={fundedMaxConsistencyPercent} onChange={e => setFundedMaxConsistencyPercent(e.target.value)} placeholder="e.g. 50" />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Funded Rule Notes</Label>
+                <Textarea
+                  value={fundedRuleNotes}
+                  onChange={e => setFundedRuleNotes(e.target.value)}
+                  placeholder="Optional notes from funded policy..."
+                  className="min-h-16 resize-y"
+                />
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Max Drawdown ($)</Label>
-              <Input type="number" value={maxDrawdown} onChange={e => setMaxDrawdown(e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Min Trading Days</Label>
-              <Input type="number" value={minTradingDays} onChange={e => setMinTradingDays(e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Max Trading Days</Label>
-              <Input type="number" value={maxTradingDays} onChange={e => setMaxTradingDays(e.target.value)} />
-            </div>
-          </div>
+          )}
+
+          {stage !== 'funded' && (
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Profit Target ($)</Label>
+                  <Input type="number" value={profitTarget} onChange={e => setProfitTarget(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Max Drawdown ($)</Label>
+                  <Input type="number" value={maxDrawdown} onChange={e => setMaxDrawdown(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Min Trading Days</Label>
+                  <Input type="number" value={minTradingDays} onChange={e => setMinTradingDays(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Max Trading Days</Label>
+                  <Input type="number" value={maxTradingDays} onChange={e => setMaxTradingDays(e.target.value)} />
+                </div>
+              </div>
+            </>
+          )}
 
           <div className="bg-muted/30 rounded-xl p-4 space-y-3">
             <div className="flex items-center justify-between">

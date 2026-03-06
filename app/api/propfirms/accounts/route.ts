@@ -22,6 +22,7 @@ const accountSchema = z.object({
   consistencyRule: z.boolean().default(false),
   newsTrading: z.boolean().default(true),
   weekendHolding: z.boolean().default(false),
+  customRules: z.union([z.record(z.string(), z.unknown()), z.array(z.string())]).optional(),
   notes: z.string().optional(),
   linkedTradeIds: z.array(z.string()).optional(),
 })
@@ -50,6 +51,7 @@ export async function POST(req: NextRequest) {
       consistencyRule: data.consistencyRule,
       newsTrading: data.newsTrading,
       weekendHolding: data.weekendHolding,
+      customRules: data.customRules ?? [],
       notes: data.notes ?? '',
       startDate: new Date(),
     }).returning()

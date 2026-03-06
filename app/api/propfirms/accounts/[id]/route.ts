@@ -19,6 +19,7 @@ const patchSchema = z.object({
   consistencyRule: z.boolean().optional(),
   newsTrading: z.boolean().optional(),
   weekendHolding: z.boolean().optional(),
+  customRules: z.union([z.record(z.string(), z.unknown()), z.array(z.string())]).optional(),
   notes: z.string().max(3000).optional(),
 })
 

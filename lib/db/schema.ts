@@ -5,6 +5,9 @@ import {
   timestamp, json, boolean, pgEnum,
 } from 'drizzle-orm/pg-core'
 import { relations } from 'drizzle-orm'
+import type { FundedRulesConfig } from '@/lib/propfirmPresets'
+
+export type PropFirmCustomRules = FundedRulesConfig | string[]
 
 // ── Enums ──────────────────────────────────────────────────
 export const sideEnum = pgEnum('side', ['long', 'short'])
@@ -96,7 +99,7 @@ export const propFirmAccounts = pgTable('prop_firm_accounts', {
   consistencyRule: boolean('consistency_rule').default(false),
   newsTrading: boolean('news_trading').default(true),
   weekendHolding: boolean('weekend_holding').default(false),
-  customRules: json('custom_rules').$type<string[]>().default([]),
+  customRules: json('custom_rules').$type<PropFirmCustomRules>().default([]),
   notes: text('notes').default(''),
   startDate: timestamp('start_date').defaultNow(),
   endDate: timestamp('end_date'),

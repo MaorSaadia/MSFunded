@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
-import type { Trade } from '@/lib/db/schema'
+import type { PropFirmCustomRules, Trade } from '@/lib/db/schema'
 
 // ── Prop firm presets ─────────────────────────────────────
 const PROP_FIRMS = [
@@ -104,6 +104,31 @@ const FIRM_BUTTON_LABEL: Record<string, string> = {
   Tradeify: 'Tradeify',
 }
 
+function serializeFundedCustomRules(input: {
+  stage: string
+  minTradeDays: string
+  minDailyProfitUsd: string
+  minBalanceToRequestUsd: string
+  maxConsistencyPercent: string
+  notes: string
+}): PropFirmCustomRules {
+  if (input.stage !== 'funded') return []
+
+  const payout = {
+    minTradeDays: input.minTradeDays ? Number(input.minTradeDays) : undefined,
+    minDailyProfitUsd: input.minDailyProfitUsd ? Number(input.minDailyProfitUsd) : undefined,
+    minBalanceToRequestUsd: input.minBalanceToRequestUsd ? Number(input.minBalanceToRequestUsd) : undefined,
+    maxConsistencyPercent: input.maxConsistencyPercent ? Number(input.maxConsistencyPercent) : undefined,
+    notes: input.notes.trim()
+      ? input.notes.split('\n').map(note => note.trim()).filter(Boolean)
+      : undefined,
+  }
+
+  return {
+    payout,
+  }
+}
+
 interface Props {
   firmId: string | null
   onClose: () => void
@@ -131,6 +156,11 @@ export function AddAccountModal({ firmId, onClose, onSaved, allTrades }: Props) 
   const [loading, setLoading] = useState(false)
   const [selectedFirm, setSelectedFirm] = useState<string | null>(null)
   const [customFirmName, setCustomFirmName] = useState('')
+  const [fundedMinTradeDays, setFundedMinTradeDays] = useState('')
+  const [fundedMinDailyProfit, setFundedMinDailyProfit] = useState('')
+  const [fundedMinBalance, setFundedMinBalance] = useState('')
+  const [fundedMaxConsistencyPercent, setFundedMaxConsistencyPercent] = useState('')
+  const [fundedRuleNotes, setFundedRuleNotes] = useState('')
 
   function applyPreset(preset: typeof PROP_FIRMS[0]['accounts'][0]) {
     setAccountLabel(preset.label)
@@ -170,6 +200,14 @@ export function AddAccountModal({ firmId, onClose, onSaved, allTrades }: Props) 
           consistencyRule,
           newsTrading,
           weekendHolding,
+          customRules: serializeFundedCustomRules({
+            stage,
+            minTradeDays: fundedMinTradeDays,
+            minDailyProfitUsd: fundedMinDailyProfit,
+            minBalanceToRequestUsd: fundedMinBalance,
+            maxConsistencyPercent: fundedMaxConsistencyPercent,
+            notes: fundedRuleNotes,
+          }),
           notes,
           linkedTradeIds,
         }),
@@ -297,33 +335,75 @@ export function AddAccountModal({ firmId, onClose, onSaved, allTrades }: Props) 
             </Select>
           </div>
 
-          <Separator />
+          {stage === 'funded' && (
+            <div className="space-y-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-emerald-500">
+                Funded Payout Rules
+              </p>
+              <p className="text-[11px] text-muted-foreground">
+                Enter only the payout tracking rules you care about.
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Min Trade Days</Label>
+                  <Input type="number" value={fundedMinTradeDays} onChange={e => setFundedMinTradeDays(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Min Daily Profit ($)</Label>
+                  <Input type="number" value={fundedMinDailyProfit} onChange={e => setFundedMinDailyProfit(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Min Balance To Request ($)</Label>
+                  <Input type="number" value={fundedMinBalance} onChange={e => setFundedMinBalance(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Max Consistency Day (%)</Label>
+                  <Input type="number" value={fundedMaxConsistencyPercent} onChange={e => setFundedMaxConsistencyPercent(e.target.value)} placeholder="e.g. 50" />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Funded Rule Notes</Label>
+                <Textarea
+                  value={fundedRuleNotes}
+                  onChange={e => setFundedRuleNotes(e.target.value)}
+                  placeholder="Optional notes from funded policy..."
+                  className="min-h-16 resize-y"
+                />
+              </div>
+            </div>
+          )}
 
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Account Rules</p>
-          <p className="text-[11px] text-muted-foreground -mt-3">
-            If your prop firm is new or rules changed, enter your own values here.
-          </p>
+          {stage !== 'funded' && (
+            <>
+              <Separator />
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label className="text-xs">Profit Target ($)</Label>
-              <Input type="number" value={profitTarget} onChange={e => setProfitTarget(e.target.value)} placeholder="e.g. 3000" />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Max Drawdown ($)</Label>
-              <Input type="number" value={maxDrawdown} onChange={e => setMaxDrawdown(e.target.value)} placeholder="e.g. 2500" />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Min Trading Days</Label>
-              <Input type="number" value={minTradingDays} onChange={e => setMinTradingDays(e.target.value)} placeholder="e.g. 7" />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Max Trading Days</Label>
-              <Input type="number" value={maxTradingDays} onChange={e => setMaxTradingDays(e.target.value)} placeholder="0 = unlimited" />
-            </div>
-          </div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Account Rules</p>
+              <p className="text-[11px] text-muted-foreground -mt-3">
+                If your prop firm is new or rules changed, enter your own values here.
+              </p>
 
-          {/* Daily Loss Limit — toggleable */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Profit Target ($)</Label>
+                  <Input type="number" value={profitTarget} onChange={e => setProfitTarget(e.target.value)} placeholder="e.g. 3000" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Max Drawdown ($)</Label>
+                  <Input type="number" value={maxDrawdown} onChange={e => setMaxDrawdown(e.target.value)} placeholder="e.g. 2500" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Min Trading Days</Label>
+                  <Input type="number" value={minTradingDays} onChange={e => setMinTradingDays(e.target.value)} placeholder="e.g. 7" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Max Trading Days</Label>
+                  <Input type="number" value={maxTradingDays} onChange={e => setMaxTradingDays(e.target.value)} placeholder="0 = unlimited" />
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Daily Loss Limit - applies in evaluation and funded */}
           <div className="bg-muted/30 rounded-xl p-4 space-y-3">
             <div className="flex items-center justify-between">
               <div>
@@ -343,12 +423,12 @@ export function AddAccountModal({ firmId, onClose, onSaved, allTrades }: Props) 
             )}
           </div>
 
-          {/* Other rule toggles */}
+          {/* Shared rule toggles (evaluation + funded) */}
           <div className="space-y-3 bg-muted/30 rounded-xl p-4">
             {[
               { label: 'Trailing Drawdown', desc: 'Drawdown tracks your peak balance (Apex, TPT, MFF)', value: isTrailingDD, set: setIsTrailingDD },
-              { label: '50% Consistency Rule', desc: 'Best single day ≤ 50% of profit target — can\'t pass in 1 day (Apex eval)', value: consistency50, set: setConsistency50 },
-              { label: '30% Consistency Rule', desc: 'Best day must be ≤ 30% of total profit earned', value: consistencyRule, set: setConsistencyRule },
+              { label: '50% Consistency Rule', desc: 'Best single day <= 50% of profit target - can\'t pass in 1 day', value: consistency50, set: setConsistency50 },
+              { label: '30% Consistency Rule', desc: 'Best day must be <= 30% of total profit earned', value: consistencyRule, set: setConsistencyRule },
               { label: 'News Trading Allowed', desc: 'Can trade during high-impact news events', value: newsTrading, set: setNewsTrading },
               { label: 'Weekend Holding', desc: 'Positions can be held over the weekend', value: weekendHolding, set: setWeekendHolding },
             ].map(item => (
@@ -361,7 +441,6 @@ export function AddAccountModal({ firmId, onClose, onSaved, allTrades }: Props) 
               </div>
             ))}
           </div>
-
           <Separator />
 
           {/* Link trades */}
@@ -422,3 +501,4 @@ export function AddAccountModal({ firmId, onClose, onSaved, allTrades }: Props) 
     </Dialog>
   )
 }
+
