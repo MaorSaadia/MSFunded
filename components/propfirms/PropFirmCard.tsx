@@ -214,8 +214,10 @@ export function PropFirmCard({ firm, allTrades, onAddAccount, onRefresh }: Props
                   : progress.tradingDays
                 const daysProgressPct = minTradeDays > 0 ? Math.min((qualifyingDays / minTradeDays) * 100, 100) : 0
                 const minBalanceToRequestUsd = payout?.minBalanceToRequestUsd ?? 0
-                const balanceProgressPct = minBalanceToRequestUsd > 0
-                  ? Math.min((currentBalance / minBalanceToRequestUsd) * 100, 100)
+                const balanceTargetDelta = Math.max(minBalanceToRequestUsd - accountSizeNum, 0)
+                const currentProfitTowardTarget = Math.max(currentBalance - accountSizeNum, 0)
+                const balanceProgressPct = balanceTargetDelta > 0
+                  ? Math.min((currentProfitTowardTarget / balanceTargetDelta) * 100, 100)
                   : 0
                 const maxConsistencyPercent = payout?.maxConsistencyPercent ?? 0
                 const totalPositivePnl = progress.dailyPnlValues.filter(dayPnl => dayPnl > 0)
@@ -234,6 +236,9 @@ export function PropFirmCard({ firm, allTrades, onAddAccount, onRefresh }: Props
                 const isPayoutEligible = hasEligibilityChecks && daysEligible && balanceEligible && consistencyEligible
                 const statusCfg = STATUS_CONFIG[account.status ?? 'active']
                 const StatusIcon = statusCfg.icon
+                const statusEntries = Object.entries(STATUS_CONFIG).filter(([key]) =>
+                  account.stage === 'funded' ? key !== 'passed' : true
+                )
 
                 return (
                   <div key={account.id}
@@ -262,7 +267,7 @@ export function PropFirmCard({ firm, allTrades, onAddAccount, onRefresh }: Props
                             </Badge>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-36">
-                            {Object.entries(STATUS_CONFIG).map(([key, cfg]) => {
+                            {statusEntries.map(([key, cfg]) => {
                               const Icon = cfg.icon
                               return (
                                 <DropdownMenuItem key={key}
@@ -396,7 +401,7 @@ export function PropFirmCard({ firm, allTrades, onAddAccount, onRefresh }: Props
                       )}
 
                       {/* Daily Loss */}
-                      {Number(account.dailyLossLimit) > 0 && (
+                      {Number(account.dailyLossLimit) > 0 && account.stage !== 'funded' && (
                         <div>
                           <div className="flex justify-between text-[10px] mb-1">
                             <span className="text-muted-foreground">Daily Loss Limit</span>
