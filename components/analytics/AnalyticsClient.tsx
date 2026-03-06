@@ -301,7 +301,7 @@ export function AnalyticsClient({ trades }: Props) {
 
       {/* ══════════════ OVERVIEW TAB ══════════════ */}
       <TabsContent value="overview" className="space-y-6">
-        <Card className="overflow-hidden border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 via-cyan-500/5 to-transparent">
+        <Card className="overflow-hidden border-emerald-500/20 bg-linear-to-br from-emerald-500/10 via-cyan-500/5 to-transparent">
           <CardContent className="p-5">
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div>

@@ -24,8 +24,6 @@ const PRESET_FIRMS = [
   { name: 'TopStep', short: 'TS', chip: 'TopStep', color: '#10b981' },
   { name: 'My Funded Futures', short: 'MFFU', chip: 'MFFU', color: '#ec4899' },
   { name: 'Tradeify', short: 'TRD', chip: 'Tradeify', color: '#84cc16' },
-  { name: 'FTMO', short: 'FTMO', chip: 'FTMO', color: '#ef4444' },
-  { name: 'FundedNext', short: 'FN', chip: 'FundedNext', color: '#14b8a6' },
   { name: 'Custom', short: '', chip: '+ Other', color: '#64748b' },
 ]
 

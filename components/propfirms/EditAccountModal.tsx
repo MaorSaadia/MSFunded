@@ -106,7 +106,7 @@ export function EditAccountModal({ account, onClose, onSaved }: Props) {
             >
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="evaluation">Evaluation / Challenge</SelectItem>
+                <SelectItem value="evaluation">Evaluation</SelectItem>
                 <SelectItem value="funded">Funded Account</SelectItem>
               </SelectContent>
             </Select>
